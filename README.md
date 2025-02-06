@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # lingoplay
 
 Lingoplay, projecte multidisciplinari
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Proyecto: Alba, Marga, Jairon
+>>>>>>> d2ea9aa43cb7d3ed1adf4a8493909a4333e9f00d
