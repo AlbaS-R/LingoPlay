@@ -2,7 +2,6 @@ import type { NextPage } from "next";
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import React, { useState } from "react";
-import { LanguageDropDown } from "~/components/LanguageDropDown";
 import type { LoginScreenState } from "~/components/LoginScreen";
 import { LoginScreen } from "~/components/LoginScreen";
 
@@ -33,7 +32,6 @@ const ForgotPassword: NextPage = () => {
             duolingo
           </Link>
           <div className="hidden items-center gap-5 md:flex">
-            <LanguageDropDown />
             <button
               className="rounded-2xl border-b-4 border-blue-300 bg-white px-4 py-2 uppercase text-blue-800 transition hover:brightness-110"
               onClick={() => setLoginScreenState("LOGIN")}
