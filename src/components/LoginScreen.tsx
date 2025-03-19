@@ -100,10 +100,9 @@ export const LoginScreen = ({
   return (
     <article
       className={[
-        "fixed inset-0 z-30 flex flex-col bg-white p-7 transition duration-300",
-        loginScreenState === "HIDDEN"
-          ? "pointer-events-none opacity-0"
-          : "opacity-100",
+        "fixed inset-0 z-30 flex flex-col p-7 transition duration-300",
+        "bg-[#2B4360]", // 🔵 Azul similar al de la imagen
+        loginScreenState === "HIDDEN" ? "pointer-events-none opacity-0" : "opacity-100",
       ].join(" ")}
       aria-hidden={!loginScreenState}
     >
@@ -127,7 +126,7 @@ export const LoginScreen = ({
       <div className="flex grow items-center justify-center">
         <div className="flex w-full flex-col gap-5 sm:w-96">
           <h2 className="text-center text-2xl font-bold text-gray-800">
-            {loginScreenState === "LOGIN" ? "Log in" : "Create your profile"}
+            {loginScreenState === "LOGIN" ? "LOG IN" : "CREATE YOUR PROFILE"}
           </h2>
           <div className="flex flex-col gap-2 text-black">
             {loginScreenState === "SIGNUP" && (
@@ -150,7 +149,7 @@ export const LoginScreen = ({
                       ?
                       {ageTooltipShown && (
                         <div className="absolute -right-5 top-full z-10 w-72 rounded-2xl border-2 border-gray-200 bg-white p-4 text-center text-xs leading-5 text-gray-800">
-                          Providing your age ensures you get the right Duolingo
+                          Providing your age ensures you get the right LingoPlay
                           experience. For more details, please visit our{" "}
                           <Link
                             href="https://www.duolingo.com/privacy"
@@ -165,7 +164,7 @@ export const LoginScreen = ({
                 </div>
                 <input
                   className="grow rounded-2xl border-2 border-gray-200 bg-gray-50 px-4 py-3"
-                  placeholder="Name (optional)"
+                  placeholder="Name"
                   ref={nameInputRef}
                 />
               </>
@@ -174,14 +173,14 @@ export const LoginScreen = ({
               className="grow rounded-2xl border-2 border-gray-200 bg-gray-50 px-4 py-3"
               placeholder={
                 loginScreenState === "LOGIN"
-                  ? "Email or username (optional)"
-                  : "Email (optional)"
+                  ? "Email or username"
+                  : "Email "
               }
             />
             <div className="relative flex grow">
               <input
                 className="grow rounded-2xl border-2 border-gray-200 bg-gray-50 px-4 py-3"
-                placeholder="Password (optional)"
+                placeholder="Password"
                 type="password"
               />
               {loginScreenState === "LOGIN" && (
@@ -209,12 +208,6 @@ export const LoginScreen = ({
           </div>
           <div className="flex gap-5">
             <button
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-200 py-3 font-bold text-blue-900 transition hover:bg-gray-50 hover:brightness-90"
-              onClick={logInAndSetUserProperties}
-            >
-              <FacebookLogoSvg className="h-5 w-5" /> Facebook
-            </button>
-            <button
               className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-200 py-3 font-bold text-blue-600 transition hover:bg-gray-50 hover:brightness-90"
               onClick={logInAndSetUserProperties}
             >
@@ -222,7 +215,7 @@ export const LoginScreen = ({
             </button>
           </div>
           <p className="text-center text-xs leading-5 text-gray-400">
-            By signing in to Duolingo, you agree to our{" "}
+            By signing in to LingoPlay, you agree to our{" "}
             <Link
               className="font-bold"
               href="https://www.duolingo.com/terms?wantsPlainInfo=1"
