@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ChevronLeftSvg, ChevronRightSvg } from "./Svgs";
 import React, { useRef } from "react";
 import languages from "~/utils/languages";
 import { useBoundStore } from "~/hooks/useBoundStore";
@@ -98,7 +97,6 @@ export const LanguageCarousel = () => {
             })
           }
         >
-          <ChevronLeftSvg />
           <span className="sr-only">Scroll left</span>
         </button>
         <div
@@ -131,7 +129,6 @@ export const LanguageCarousel = () => {
             })
           }
         >
-          <ChevronRightSvg />
           <span className="sr-only">Scroll right</span>
         </button>
       </div>

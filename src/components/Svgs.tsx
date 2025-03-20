@@ -73,17 +73,6 @@ export const PodcastIconSvg = (props: ComponentProps<"svg">) => {
   );
 };
 
-export const ChevronDownSvg = () => {
-  return (
-    <svg height="40" viewBox="0 96 960 960" width="40">
-      <path
-        fill="white"
-        d="M480 717.138 233.623 470.761l53.71-53.71L480 610.385l192.667-192.667 53.71 53.71L480 717.138Z"
-      />
-    </svg>
-  );
-};
-
 export const TreasureProgressSvg = () => {
   return (
     <svg width="38" height="40" viewBox="0 0 38 40" fill="none">
