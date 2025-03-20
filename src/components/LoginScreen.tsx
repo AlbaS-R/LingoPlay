@@ -101,7 +101,7 @@ export const LoginScreen = ({
     <article
       className={[
         "fixed inset-0 z-30 flex flex-col p-7 transition duration-300",
-        "bg-[#2B4360]", // 🔵 Azul similar al de la imagen
+        "bg-[#235390]", // 🔵 Azul similar al de la imagen
         loginScreenState === "HIDDEN" ? "pointer-events-none opacity-0" : "opacity-100",
       ].join(" ")}
       aria-hidden={!loginScreenState}
@@ -125,7 +125,7 @@ export const LoginScreen = ({
       </header>
       <div className="flex grow items-center justify-center">
         <div className="flex w-full flex-col gap-5 sm:w-96">
-          <h2 className="text-center text-2xl font-bold text-gray-800">
+          <h2 className="text-center text-2xl font-bold text-white">
             {loginScreenState === "LOGIN" ? "LOG IN" : "CREATE YOUR PROFILE"}
           </h2>
           <div className="flex flex-col gap-2 text-black">
@@ -207,12 +207,12 @@ export const LoginScreen = ({
             <div className="h-[2px] grow bg-gray-300"></div>
           </div>
           <div className="flex gap-5">
-            <button
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-200 py-3 font-bold text-blue-600 transition hover:bg-gray-50 hover:brightness-90"
-              onClick={logInAndSetUserProperties}
-            >
-              <GoogleLogoSvg className="h-5 w-5" /> Google
-            </button>
+          <button
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-300 bg-white py-3 font-bold text-gray-700 transition hover:bg-gray-100 hover:brightness-90"
+            onClick={logInAndSetUserProperties}
+          >
+            <GoogleLogoSvg className="h-5 w-5" /> Google
+          </button>
           </div>
           <p className="text-center text-xs leading-5 text-gray-400">
             By signing in to LingoPlay, you agree to our{" "}
