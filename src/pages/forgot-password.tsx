@@ -26,10 +26,10 @@ const ForgotPassword: NextPage = () => {
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   return (
     <div className="flex min-h-screen flex-col items-center">
-      <header className="flex h-[70px] w-full justify-center bg-blue-400 font-bold text-white">
+      <header className="flex h-[70px] w-full justify-center bg-[#235390] font-bold text-white">
         <div className="flex max-w-5xl grow items-center justify-between px-5">
           <Link className="text-3xl" href="/">
-            duolingo
+            LingoPlay
           </Link>
           <div className="hidden items-center gap-5 md:flex">
             <button
@@ -75,8 +75,8 @@ const ForgotPassword: NextPage = () => {
         </div>
       </header>
       <div className="flex w-full grow flex-col items-center gap-5 px-5 pt-5 sm:w-96 sm:pt-52">
-        <h1 className="text-center text-2xl font-bold text-gray-800">
-          Forgot password
+        <h1 className="text-center text-2xl font-bold text-[#235390]">
+          FORGOT PASSWORD
         </h1>
         <p className="text-center text-gray-800">
           We will send you instructions on how to reset your password by email.
