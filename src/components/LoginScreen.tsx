@@ -94,7 +94,7 @@ export const LoginScreen = ({
     setUsername(username);
     setName(name);
     logIn();
-    void router.push("/learn");
+    void router.push("/register");
   };
 
   return (
@@ -102,7 +102,9 @@ export const LoginScreen = ({
       className={[
         "fixed inset-0 z-30 flex flex-col p-7 transition duration-300",
         "bg-[#235390]", // 🔵 Azul similar al de la imagen
-        loginScreenState === "HIDDEN" ? "pointer-events-none opacity-0" : "opacity-100",
+        loginScreenState === "HIDDEN"
+          ? "pointer-events-none opacity-0"
+          : "opacity-100",
       ].join(" ")}
       aria-hidden={!loginScreenState}
     >
@@ -172,9 +174,7 @@ export const LoginScreen = ({
             <input
               className="grow rounded-2xl border-2 border-gray-200 bg-gray-50 px-4 py-3"
               placeholder={
-                loginScreenState === "LOGIN"
-                  ? "Email or username"
-                  : "Email "
+                loginScreenState === "LOGIN" ? "Email or username" : "Email "
               }
             />
             <div className="relative flex grow">
@@ -207,12 +207,12 @@ export const LoginScreen = ({
             <div className="h-[2px] grow bg-gray-300"></div>
           </div>
           <div className="flex gap-5">
-          <button
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-300 bg-white py-3 font-bold text-gray-700 transition hover:bg-gray-100 hover:brightness-90"
-            onClick={logInAndSetUserProperties}
-          >
-            <GoogleLogoSvg className="h-5 w-5" /> Google
-          </button>
+            <button
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-300 bg-white py-3 font-bold text-gray-700 transition hover:bg-gray-100 hover:brightness-90"
+              onClick={logInAndSetUserProperties}
+            >
+              <GoogleLogoSvg className="h-5 w-5" /> Google
+            </button>
           </div>
           <p className="text-center text-xs leading-5 text-gray-400">
             By signing in to LingoPlay, you agree to our{" "}
