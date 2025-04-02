@@ -50,7 +50,7 @@ export const useBottomBarItems = () => {
     },
     {
       name: "Downloads",
-      href: loggedIn ? "/profile" : "/learn?sign-up",
+      href: loggedIn ? "/downloads" : "/learn?sign-up",
       icon: (
         <svg
           width="46"
