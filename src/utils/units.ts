@@ -64,23 +64,5 @@ export const units: readonly Unit[] = [
       { type: "trophy", description: "Unit 2 review" },
     ],
   },
-  {
-    unitNumber: 3,
-    description: "Order food and drink",
-    backgroundColor: "bg-[#60A5FA]",  // mantens el fons clar
-    textColor: "text-[#60A5FA]",
-    borderColor: "border-[#4C7EDB]",  // nou blau fosc suau
-    tiles: [
-      { type: "fast-forward", description: "Order food and drink" },
-      { type: "book", description: "The passport" },
-      { type: "star", description: "Order food and drinks" },
-      { type: "treasure" },
-      { type: "book", description: "The honeymoon" },
-      { type: "star", description: "Get around in a city" },
-      { type: "treasure" },
-      { type: "dumbbell", description: "Personalized practice" },
-      { type: "book", description: "Doctor Eddy" },
-      { type: "trophy", description: "Unit 2 review" },
-    ],
-  },
+
 ];
