@@ -73,7 +73,7 @@ export const LeftBar = ({ selectedTab }: { selectedTab: Tab | null }) => {
               <LeftBarMoreMenuSvg className="h-6 w-6" />
               <span className="hidden text-sm lg:inline">More</span>
               <div
-                className={`absolute left-full top-[-10px] min-w-[300px] rounded-2xl border-2 border-gray-300 bg-white text-left text-gray-400 ${
+                className={`absolute left-[88px] top-0 min-w-[300px] rounded-2xl border-2 border-gray-300 bg-white text-left text-gray-400 shadow-xl z-50 ${
                   moreMenuShown ? "" : "hidden"
                 }`}
               >
