@@ -1,17 +1,25 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { Tab } from "./BottomBar";
 import { useBottomBarItems } from "./BottomBar";
 import type { LoginScreenState } from "./LoginScreen";
 import { LoginScreen } from "./LoginScreen";
 import { GlobeIconSvg, PodcastIconSvg } from "./Svgs";
 import { useBoundStore } from "~/hooks/useBoundStore";
+import { useRouter } from "next/router";
 
 const LeftBarMoreMenuSvg = (props: ComponentProps<"svg">) => {
   return (
     <svg width="46" height="46" viewBox="0 0 46 46" fill="none" {...props}>
-      <circle cx="23" cy="23" r="19" fill="#CE82FF" stroke="#CE82FF" strokeWidth="2" />
+      <circle
+        cx="23"
+        cy="23"
+        r="19"
+        fill="#CE82FF"
+        stroke="#CE82FF"
+        strokeWidth="2"
+      />
       <circle cx="15" cy="23" r="2" fill="white" />
       <circle cx="23" cy="23" r="2" fill="white" />
       <circle cx="31" cy="23" r="2" fill="white" />
@@ -19,14 +27,33 @@ const LeftBarMoreMenuSvg = (props: ComponentProps<"svg">) => {
   );
 };
 
-export const LeftBar = ({ selectedTab }: { selectedTab: Tab | null }) => {
+export const LeftBar = ({ selectedTab }: { selectedTab?: Tab }) => {
+  const router = useRouter();
   const loggedIn = useBoundStore((x) => x.loggedIn);
   const logOut = useBoundStore((x) => x.logOut);
-
   const [moreMenuShown, setMoreMenuShown] = useState(false);
-  const [loginScreenState, setLoginScreenState] = useState<LoginScreenState>("HIDDEN");
-
+  const [loginScreenState, setLoginScreenState] =
+    useState<LoginScreenState>("HIDDEN");
+  const [activeTab, setActiveTab] = useState<Tab | null>(null);
   const bottomBarItems = useBottomBarItems();
+
+  useEffect(() => {
+    const updateActiveTab = () => {
+      const currentPath = router.asPath.split("?")[0];
+      const matchingItem = bottomBarItems.find((item) => {
+        const itemBasePath = item.href.split("?")[0];
+        return currentPath === itemBasePath;
+      });
+      setActiveTab(matchingItem?.name ?? selectedTab ?? null);
+    };
+
+    updateActiveTab();
+    router.events.on("routeChangeComplete", updateActiveTab);
+
+    return () => {
+      router.events.off("routeChangeComplete", updateActiveTab);
+    };
+  }, [router, selectedTab, bottomBarItems]);
 
   return (
     <>
@@ -39,15 +66,15 @@ export const LeftBar = ({ selectedTab }: { selectedTab: Tab | null }) => {
         </Link>
         <ul className="flex flex-col items-stretch gap-3">
           {bottomBarItems.map((item) => {
-            const isActive = item.name === selectedTab;
+            const isActive = activeTab === item.name;
             return (
               <li key={item.href} className="flex flex-1">
                 <Link
                   href={item.href}
-                  className={`flex grow items-center gap-3 rounded-xl px-2 py-1 min-h-[44px] text-sm font-bold uppercase ${
+                  className={`flex min-h-[44px] grow items-center gap-3 rounded-xl px-2 py-1 text-sm font-bold uppercase transition-colors duration-200 ${
                     isActive
                       ? "border-2 border-[#84d8ff] bg-[#ddf4ff] text-blue-400"
-                      : "text-gray-400 hover:bg-gray-100"
+                      : "border-2 border-transparent text-gray-400 hover:bg-gray-100"
                   }`}
                 >
                   {React.cloneElement(item.icon, { className: "h-6 w-6" })}
@@ -59,10 +86,10 @@ export const LeftBar = ({ selectedTab }: { selectedTab: Tab | null }) => {
 
           <li className="flex flex-1">
             <div
-              className={`relative flex grow items-center gap-3 rounded-xl px-2 py-1 min-h-[44px] text-sm font-bold uppercase ${
+              className={`relative flex min-h-[44px] grow items-center gap-3 rounded-xl px-2 py-1 text-sm font-bold uppercase transition-colors duration-200 ${
                 moreMenuShown
                   ? "border-2 border-[#84d8ff] bg-[#ddf4ff] text-blue-400"
-                  : "text-gray-400 hover:bg-gray-100"
+                  : "border-2 border-transparent text-gray-400 hover:bg-gray-100"
               }`}
               onClick={() => setMoreMenuShown((x) => !x)}
               onMouseEnter={() => setMoreMenuShown(true)}
@@ -73,7 +100,7 @@ export const LeftBar = ({ selectedTab }: { selectedTab: Tab | null }) => {
               <LeftBarMoreMenuSvg className="h-6 w-6" />
               <span className="hidden text-sm lg:inline">More</span>
               <div
-                className={`absolute left-[88px] top-0 min-w-[300px] rounded-2xl border-2 border-gray-300 bg-white text-left text-gray-400 shadow-xl z-50 ${
+                className={`absolute left-[88px] top-0 z-50 min-w-[300px] rounded-2xl border-2 border-gray-300 bg-white text-left text-gray-400 shadow-xl ${
                   moreMenuShown ? "" : "hidden"
                 }`}
               >
