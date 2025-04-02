@@ -17,6 +17,9 @@ import { Flag } from "~/components/Flag";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { getUserProfile } from "~/services/userService";
+import dayjs from "dayjs";
+
 
 const Profile: NextPage = () => {
   return (
@@ -58,7 +61,14 @@ const ProfileTopSection = () => {
   const loggedIn = useBoundStore((x) => x.loggedIn);
   const name = useBoundStore((x) => x.name);
   const username = useBoundStore((x) => x.username);
-  const joinedAt = useBoundStore((x) => x.joinedAt).format("MMMM YYYY");
+  const joinedAtDate = useBoundStore((x) => x.joinedAt);
+  const joinedAt =
+    joinedAtDate instanceof Date && !isNaN(joinedAtDate.getTime())
+      ? joinedAtDate.toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+        })
+      : "";
   const followingCount = 0;
   const followersCount = 0;
   const language = useBoundStore((x) => x.language);
@@ -66,6 +76,18 @@ const ProfileTopSection = () => {
   useEffect(() => {
     if (!loggedIn) {
       void router.push("/");
+    } else {
+      const userId = "usuario123"; // ← Aquí pon el ID del usuario real en Firebase
+
+      getUserProfile(userId).then((data) => {
+        useBoundStore.setState({
+          name: data.nombre_usuario,
+          username: data.nombre_usuario.toLowerCase(),
+          joinedAt: dayjs(data.fecha_creacion.seconds * 1000),
+          language: data.language || "es",
+          streak: data.streak || 0,
+        });
+      });
     }
   }, [loggedIn, router]);
 
