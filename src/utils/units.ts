@@ -49,7 +49,10 @@ export const units: readonly Unit[] = [
     borderColor: "border-[#3A6DC4]",   // Blau fosc suau i elegant
     tiles: [
       { type: "fast-forward", description: "Get around in a city" },
+      /*
       { type: "dumbbell", description: "Personalized practice" },
+      { type: "dumbbell", description: "Another one" },
+      */
       { type: "book", description: "One thing" },
       { type: "treasure" },
       { type: "star", description: "Get around in a city" },
