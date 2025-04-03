@@ -18,8 +18,8 @@ import { useBoundStore } from "~/hooks/useBoundStore";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { getUserProfile } from "~/services/userService";
+import { auth } from "~/firebaseConfig";
 import dayjs from "dayjs";
-
 
 const Profile: NextPage = () => {
   return (
@@ -41,6 +41,7 @@ const Profile: NextPage = () => {
 
 export default Profile;
 
+// Top bar móvil
 const ProfileTopBar = () => {
   return (
     <div className="fixed left-0 right-0 top-0 flex h-16 items-center justify-between border-b-2 border-gray-200 bg-white px-5 text-xl font-bold text-gray-300 md:hidden">
@@ -56,45 +57,56 @@ const ProfileTopBar = () => {
   );
 };
 
+// Perfil superior
 const ProfileTopSection = () => {
   const router = useRouter();
-  const loggedIn = useBoundStore((x) => x.loggedIn);
-  const name = useBoundStore((x) => x.name);
-  const username = useBoundStore((x) => x.username);
-  const joinedAtDate = useBoundStore((x) => x.joinedAt);
-  const joinedAt =
-    joinedAtDate instanceof Date && !isNaN(joinedAtDate.getTime())
-      ? joinedAtDate.toLocaleDateString("es-ES", {
-          year: "numeric",
-          month: "long",
-        })
-      : "";
-  const followingCount = 0;
-  const followersCount = 0;
-  const language = useBoundStore((x) => x.language);
+  const store = useBoundStore();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loggedIn) {
+    if (!store.loggedIn) {
       void router.push("/");
     } else {
-      const userId = "usuario123"; // ← Aquí pon el ID del usuario real en Firebase
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userId = user.uid;
 
       getUserProfile(userId).then((data) => {
         useBoundStore.setState({
           name: data.nombre_usuario,
           username: data.nombre_usuario.toLowerCase(),
-          joinedAt: dayjs(data.fecha_creacion.seconds * 1000),
-          language: data.language || "es",
+          joinedAt: dayjs(data.fecha_creacion?.seconds * 1000 || new Date()),
+          language: data.language,
           streak: data.streak || 0,
+          xp: data.xp || 0,
+          league: data.league || "Bronze",
+          top3Finishes: data.top3Finishes || 0,
+          achievements: data.achievements || {},
+          followers: data.followers || [],
+          following: data.following || [],
         });
+
+        setLoading(false);
       });
     }
-  }, [loggedIn, router]);
+  }, [store.loggedIn, router]);
+
+  const name = store.name;
+  const username = store.username;
+  const joinedAt = store.joinedAt?.format("MMMM YYYY") || "";
+  const followers = store.followers?.length ?? 0;
+  const following = store.following?.length ?? 0;
+  const language = store.language;
+
+  if (loading) {
+    return <p className="text-gray-400">Cargando perfil...</p>;
+  }
 
   return (
     <section className="flex flex-row-reverse border-b-2 border-gray-200 pb-8 md:flex-row md:gap-8">
       <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-gray-400 text-3xl font-bold text-gray-400 md:h-44 md:w-44 md:text-7xl">
-        {username.charAt(0).toUpperCase()}
+        {username?.charAt(0).toUpperCase()}
       </div>
       <div className="flex grow flex-col justify-between gap-3">
         <div className="flex flex-col gap-2">
@@ -108,11 +120,12 @@ const ProfileTopSection = () => {
           </div>
           <div className="flex items-center gap-3">
             <ProfileFriendsSvg />
-            <span className="text-gray-500">{`${followingCount} Following / ${followersCount} Followers`}</span>
+            <span className="text-gray-500">
+              {`${following} Following / ${followers} Followers`}
+            </span>
           </div>
         </div>
-
-        <Flag language={language} width={40} />
+        {language && <Flag language={language} width={40} />}
       </div>
       <Link
         href="/settings/account"
@@ -125,11 +138,12 @@ const ProfileTopSection = () => {
   );
 };
 
+// Estadísticas
 const ProfileStatsSection = () => {
   const streak = useBoundStore((x) => x.streak);
-  const totalXp = 125;
-  const league = "Bronze";
-  const top3Finishes = 0;
+  const xp = useBoundStore((x) => x.xp);
+  const league = useBoundStore((x) => x.league);
+  const top3Finishes = useBoundStore((x) => x.top3Finishes);
 
   return (
     <section>
@@ -154,7 +168,7 @@ const ProfileStatsSection = () => {
         <div className="flex gap-2 rounded-2xl border-2 border-gray-200 p-2 md:gap-3 md:px-6 md:py-4">
           <LightningProgressSvg size={35} />
           <div className="flex flex-col">
-            <span className="text-xl font-bold">{totalXp}</span>
+            <span className="text-xl font-bold">{xp}</span>
             <span className="text-sm text-gray-400 md:text-base">Total XP</span>
           </div>
         </div>
@@ -168,7 +182,7 @@ const ProfileStatsSection = () => {
           </div>
         </div>
         <div className="flex gap-2 rounded-2xl border-2 border-gray-200 p-2 md:gap-3 md:px-6 md:py-4">
-          {top3Finishes === 0 ? <EmptyMedalSvg /> : <EmptyMedalSvg />}
+          <EmptyMedalSvg />
           <div className="flex flex-col">
             <span
               className={[
@@ -188,8 +202,10 @@ const ProfileStatsSection = () => {
   );
 };
 
+// Sección de amigos
 const ProfileFriendsSection = () => {
   const [state, setState] = useState<"FOLLOWING" | "FOLLOWERS">("FOLLOWING");
+
   return (
     <section>
       <h2 className="mb-5 text-2xl font-bold">Friends</h2>
