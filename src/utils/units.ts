@@ -1,4 +1,5 @@
 export type Unit = {
+  unitName : String;
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
@@ -18,6 +19,7 @@ export type TileType = Tile["type"];
 
 export const units: readonly Unit[] = [
   {
+    unitName : "Jocs de memoria",
     unitNumber: 1,
     description: "Form basic sentences, greet people",
     backgroundColor: "bg-[#235390]",
@@ -42,6 +44,7 @@ export const units: readonly Unit[] = [
     ],
   },
   {
+    unitName : "Excercicis",
     unitNumber: 2,
     description: "Get around in a city",
     backgroundColor: "bg-[#4F8FE8]",
@@ -62,6 +65,7 @@ export const units: readonly Unit[] = [
     ],
   },
   {
+    unitName : "Jocs de veu",
     unitNumber: 3,
     description: "Order food and drink",
     backgroundColor: "bg-[#60A5FA]",  // mantens el fons clar
