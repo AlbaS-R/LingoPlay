@@ -1,63 +1,147 @@
-import { type NextPage } from "next";
+import { NextPage } from "next";
+import Link from "next/link";
+import { Button, Grow, Paper, Popper, MenuItem, MenuList, ClickAwayListener } from "@mui/material";
+import { useState, useRef, useEffect } from "react";
 import { LeftBar } from "~/components/LeftBar";
 import { RightBar } from "~/components/RightBar";
 import { BottomBar } from "~/components/BottomBar";
-import Link from "next/link";
-import {
-    Dropdown,
-    makeStyles,
-    Option,
-    useId,
-  } from "@fluentui/react-components";
-  import type { DropdownProps } from "@fluentui/react-components";
+import type { Tile, TileType, Unit } from "~/utils/units";
+import { units } from "~/utils/units";
+
+
+const UnitHeader = ({
+  unitName,
+  unitNumber,
+  description,
+  backgroundColor,
+  borderColor,
+}: {
+  unitName: string;
+  unitNumber: number;
+  description: string;
+  backgroundColor: `bg-${string}`;
+  borderColor: `border-${string}`;
+}) => {
+  return (
+    <article
+      className={["max-w-2xl text-white sm:rounded-xl", backgroundColor, borderColor].join(" ")}
+    >
+      <header className="flex items-center justify-between gap-4 p-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold">{unitName}</h2>
+        </div>
+      </header>
+    </article>
+  );
+};
 
 const Downloads: NextPage = () => {
-    function closeDropdown(event: MouseEvent<HTMLAnchorElement, MouseEvent>): void {
-        throw new Error("Function not implemented.");
+  const MenuListComposition = ({ label }: { label: string }) => {
+    const [open, setOpen] = useState(false);
+    const anchorRef = useRef<HTMLButtonElement>(null);
+
+    const handleToggle = () => setOpen((prevOpen) => !prevOpen);
+    const handleClose = (event: Event | React.SyntheticEvent) => {
+      if (
+        anchorRef.current &&
+        anchorRef.current.contains(event.target as HTMLElement)
+      ) return;
+      setOpen(false);
+    };
+
+    function handleListKeyDown(event: React.KeyboardEvent) {
+      if (event.key === "Tab" || event.key === "Escape") setOpen(false);
     }
+
+    const prevOpen = useRef(open);
+    useEffect(() => {
+      if (prevOpen.current && !open) anchorRef.current?.focus();
+      prevOpen.current = open;
+    }, [open]);
+
+    return (
+      <div>
+        <Button
+          ref={anchorRef}
+          onClick={handleToggle}
+          aria-controls={open ? "menu-list" : undefined}
+          aria-expanded={open ? "true" : undefined}
+          aria-haspopup="true"
+        >
+          {label}
+        </Button>
+        <Popper
+          open={open}
+          anchorEl={anchorRef.current}
+          placement="bottom"
+          transition
+          disablePortal
+        >
+          {({ TransitionProps }) => (
+            <Grow
+              {...TransitionProps}
+              style={{ transformOrigin: "center top" }}
+            >
+              <Paper>
+                <ClickAwayListener onClickAway={handleClose}>
+                  <MenuList
+                    autoFocusItem={open}
+                    onKeyDown={handleListKeyDown}
+                  >
+                    <MenuItem onClick={handleClose}>Exercici 1</MenuItem>
+                    <MenuItem onClick={handleClose}>Exercici 2</MenuItem>
+                    <MenuItem onClick={handleClose}>Exercici 3</MenuItem>
+                    <MenuItem onClick={handleClose}>Exercici 4</MenuItem>
+                    <MenuItem onClick={handleClose}>Exercici 5</MenuItem>
+                  </MenuList>
+                </ClickAwayListener>
+              </Paper>
+            </Grow>
+          )}
+        </Popper>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Contenedor principal */}
       <div className="flex flex-1">
         <LeftBar />
         <main className="flex-1 p-4">
           <h1 className="text-2xl font-bold">Downloads Page</h1>
           <p>Aquí puedes descargar archivos.</p>
-          <Link href="/" className="text-blue-500 underline">
-            Volver a inicio
-          </Link>
-          <div className="mx-auto p-4 absolute right-0 mt-2 w-44 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                        <ul role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                            <li>
-                                <a
-                                    href="#"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={closeDropdown}
-                                >
-                                    Option 1
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={closeDropdown}
-                                >
-                                    Option 2
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={closeDropdown}
-                                >
-                                    Option 3
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+          <Link href="/" className="text-blue-500 underline">Volver a inicio</Link>
+
+          <div className="flex justify-center mt-6 space-x-4">
+            <MenuListComposition label="Jocs de memòria" />
+            <MenuListComposition label="Jocs de lògica" />
+            <MenuListComposition label="Puzzles visuals" />
+            <MenuListComposition label="Dictats auditivos" />
+          </div>
+
+          <div className="mt-8">
+            <UnitHeader
+              unitName="Unitat 1"
+              unitNumber={1}
+              description="Una breve descripción de la unidad 1."
+              backgroundColor="bg-blue-500"
+              borderColor="border-blue-700"
+            />
+            <UnitHeader
+              unitName="Unitat 2"
+              unitNumber={2}
+              description="Una breve descripción de la unidad 2."
+              backgroundColor="bg-green-500"
+              borderColor="border-green-700"
+            />
+            <UnitHeader
+              unitName="Unitat 3"
+              unitNumber={3}
+              description="Una breve descripción de la unidad 3."
+              backgroundColor="bg-red-500"
+              borderColor="border-red-700"
+            />
+          </div>
         </main>
         <RightBar />
       </div>

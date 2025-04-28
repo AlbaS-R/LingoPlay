@@ -9,7 +9,7 @@ type BottomBarItem = {
   icon: JSX.Element;
 };
 
-export type Tab = "Exercises" | "Downloads" | "Profile";
+export type Tab = "Exercises" | "Downloads" | "Profile" | "Multiplayer";
 
 export const useBottomBarItems = () => {
   const loggedIn = useBoundStore((x) => x.loggedIn);
@@ -136,7 +136,31 @@ export const useBottomBarItems = () => {
         </svg>
       ),
     },
+    {
+      name: "Multiplayer",
+      href: loggedIn ? "/Multiplayer" : "/learn?sign-up",
+      icon: (
+        <svg
+          width="46"
+          height="46"
+          viewBox="0 0 46 46"
+          fill="none"
+          className="h-[50px] w-[50px]"
+        >
+          <rect x="6" y="36" width="34" height="4" rx="2" fill="#A56644" />
+          <path
+            d="M23 6C21.8954 6 21 6.89543 21 8V25.17L16.41 20.59C15.63 19.81 14.37 19.81 13.59 20.59C12.81 21.37 12.81 22.63 13.59 23.41L21.59 31.41C22.37 32.19 23.63 32.19 24.41 31.41L32.41 23.41C33.19 22.63 33.19 21.37 32.41 20.59C31.63 19.81 30.37 19.81 29.59 20.59L25 25.17V8C25 6.89543 24.1046 6 23 6Z"
+            fill="#FF4945"
+          />
+          <path
+            d="M10 36C10 34.3431 11.3431 33 13 33H33C34.6569 33 36 34.3431 36 36V38C36 39.6569 34.6569 41 33 41H13C11.3431 41 10 39.6569 10 38V36Z"
+            fill="#B9E8FF"
+          />
+        </svg>
+      ),
+    },
   ];
+
 
   return bottomBarItems;
 };
@@ -190,11 +214,10 @@ export const BottomBar = ({ selectedTab }: BottomBarProps) => {
           >
             <Link
               href={item.href}
-              className={`flex min-h-[44px] grow items-center justify-center gap-3 rounded-xl px-2 py-1 text-sm font-bold uppercase transition-colors duration-200 ${
-                activeTab === item.name
+              className={`flex min-h-[44px] grow items-center justify-center gap-3 rounded-xl px-2 py-1 text-sm font-bold uppercase transition-colors duration-200 ${activeTab === item.name
                   ? "border-2 border-[#84d8ff] bg-[#ddf4ff] text-blue-400"
                   : "border-2 border-transparent text-gray-400 hover:bg-gray-100"
-              } `}
+                } `}
               onClick={() => setActiveTab(item.name)}
             >
               {item.icon}
