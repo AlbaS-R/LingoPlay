@@ -21,7 +21,6 @@ const Lesson: NextPage = () => {
   const startTime = useRef(Date.now());
   const endTime = useRef(startTime.current + 1000 * 60 * 3 + 1000 * 33);
 
-  const totalCorrectAnswersNeeded = 3;
   const [isStartingLesson, setIsStartingLesson] = useState(true);
   const unitNumber = Number(router.query["fast-forward"]);
 
@@ -75,6 +74,7 @@ const Lesson: NextPage = () => {
     fetchData();
   }, []);
 
+  const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
   const isAnswerCorrect = selectedAnswer === currentProblem?.correctAnswer;
 
@@ -214,14 +214,14 @@ const Lesson: NextPage = () => {
 
         {correctAnswerShown && (
           <div
-            className={`rounded-xl p-4 text-center font-bold ${isAnswerCorrect ? "bg-lime-100 text-green-600" : "bg-red-100 text-red-500"}`}
+            className={`rounded-xl p-4 text-center font-bold ${isAnswerCorrect ? "bg-green-100 text-green-800" : "bg-rose-100 text-rose-600"}`}
           >
             {isAnswerCorrect
               ? "Good job!"
               : `Correct answer: ${currentProblem.answers[currentProblem.correctAnswer].name}`}
             <button
               onClick={onFinish}
-              className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${isAnswerCorrect ? "border-green-600 bg-green-500" : "border-red-600 bg-red-500"}`}
+              className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${isAnswerCorrect ? "border-green-600 bg-green-500" : "border-rose-600 bg-rose-500"}`}
             >
               Continue
             </button>
