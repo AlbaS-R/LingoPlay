@@ -7,12 +7,14 @@ export type UserSlice = {
   joinedAt: dayjs.Dayjs;
   loggedIn: boolean;
   streak: number;
+  
   xp: number;
   league: string;
   top3Finishes: number;
   achievements: Record<string, number>;
   followers: string[];
   following: string[];
+  avatarURL: string | null;
   setName: (name: string) => void;
   setUsername: (username: string) => void;
   setLoggedIn: (value: boolean) => void; 
@@ -31,7 +33,8 @@ export const createUserSlice: BoundStateCreator<UserSlice> = (set) => ({
   top3Finishes: 0,
   achievements: {},
   followers: [],
-  following: [], 
+  following: [],
+  avatarURL: null, 
 
   setName: (name: string) => set(() => ({ name })),
   setUsername: (username: string) => set(() => ({ username })),

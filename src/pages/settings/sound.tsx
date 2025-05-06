@@ -13,13 +13,11 @@ const Sound: NextPage = () => {
 
   const speakingExercises = useBoundStore((x) => x.speakingExercises);
   const setSpeakingExercises = useBoundStore((x) => x.setSpeakingExercises);
-  const [localSpeakingExercises, setLocalSpeakingExercises] =
-    useState(speakingExercises);
+  const [localSpeakingExercises, setLocalSpeakingExercises] = useState(speakingExercises);
 
   const listeningExercises = useBoundStore((x) => x.listeningExercises);
   const setListeningExercises = useBoundStore((x) => x.setListeningExercises);
-  const [localListeningExercises, setLocalListeningExercises] =
-    useState(listeningExercises);
+  const [localListeningExercises, setLocalListeningExercises] = useState(listeningExercises);
 
   const soundOptions = [
     {
@@ -63,43 +61,56 @@ const Sound: NextPage = () => {
             Save changes
           </button>
         </div>
+
         <div className="flex justify-center gap-12">
           <div className="flex w-full max-w-xl flex-col gap-8">
-            {soundOptions.map(({ title, value, setValue }) => {
-              return (
-                <div
-                  key={title}
-                  className="flex justify-between sm:justify-center sm:gap-10 sm:pl-10"
-                >
-                  <div className="font-bold sm:w-1/2">{title}</div>
-                  <label className="pr-5 sm:w-1/2 sm:pr-0">
+            {soundOptions.map(({ title, value, setValue }) => (
+              <div
+                key={title}
+                className="flex justify-between sm:justify-center sm:gap-10 sm:pl-10"
+              >
+                <div className="font-bold sm:w-1/2">{title}</div>
+                <label className="pr-5 sm:w-1/2 sm:pr-0">
+                  <div
+                    className={[
+                      "relative h-6 w-12 cursor-pointer rounded-full transition-all duration-300",
+                      value ? "bg-blue-400" : "bg-gray-200",
+                    ].join(" ")}
+                  >
                     <div
                       className={[
-                        "relative h-6 w-12 cursor-pointer rounded-full transition-all duration-300",
-                        value ? "bg-blue-400" : "bg-gray-200",
+                        "absolute h-10 w-10 rounded-xl border-2 border-b-4 bg-white transition-all duration-300",
+                        value ? "border-blue-400" : "border-gray-200",
                       ].join(" ")}
-                    >
-                      <div
-                        className={[
-                          "absolute h-10 w-10 rounded-xl border-2 border-b-4 bg-white transition-all duration-300",
-                          value ? "border-blue-400" : "border-gray-200",
-                        ].join(" ")}
-                        style={{
-                          top: "calc(50% - 20px)",
-                          left: value ? "calc(100% - 20px)" : "-20px",
-                        }}
-                      ></div>
-                    </div>
-                    <input
-                      className="hidden"
-                      type="checkbox"
-                      checked={value}
-                      onChange={() => setValue((x) => !x)}
-                    />
-                  </label>
-                </div>
-              );
-            })}
+                      style={{
+                        top: "calc(50% - 20px)",
+                        left: value ? "calc(100% - 20px)" : "-20px",
+                      }}
+                    ></div>
+                  </div>
+                  <input
+                    className="hidden"
+                    type="checkbox"
+                    checked={value}
+                    onChange={() => {
+                      const global = useBoundStore.getState();
+
+                      if (global.soundEffects) {
+                        if (title === "Speaking exercises") {
+                          new Audio("/sounds/speaking_exercise_sound.mp3").play();
+                        } else if (title === "Listening exercises") {
+                          new Audio("/sounds/listening_exercise_sound.mp3").play();
+                        } else {
+                          new Audio("/sounds/click.mp3").play();
+                        }
+                      }
+
+                      setValue((x) => !x);
+                    }}
+                  />
+                </label>
+              </div>
+            ))}
           </div>
           <SettingsRightNav selectedTab="Sound" />
         </div>

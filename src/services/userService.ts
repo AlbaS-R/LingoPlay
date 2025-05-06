@@ -17,11 +17,26 @@ export const getUserProfile = async (userId: string) => {
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    return docSnap.data();
+    const data = docSnap.data();
+    return {
+      nombre_usuario: data.nombre_usuario,
+      username: data.username,
+      language: data.language,
+      streak: data.streak,
+      xp: data.xp,
+      league: data.league,
+      top3Finishes: data.top3Finishes,
+      achievements: data.achievements,
+      followers: data.followers,
+      following: data.following,
+      fecha_creacion: data.fecha_creacion,
+      avatarURL: data.avatarURL || null, // ✅ AVATAR AQUÍ
+    };
   } else {
     throw new Error("Usuario no encontrado");
   }
 };
+ 
 
 //  Actualizar datos de un usuario en Firebase
 export const updateUserProfile = async (userId: string, data: any) => {

@@ -1,4 +1,5 @@
 import type { NextPage } from "next";
+import Image from "next/image";
 import { BottomBar } from "~/components/BottomBar";
 import { LeftBar } from "~/components/LeftBar";
 import {
@@ -85,6 +86,7 @@ const ProfileTopSection = () => {
           achievements: data.achievements || {},
           followers: data.followers || [],
           following: data.following || [],
+          avatarURL: data.avatarURL || null, // ✅ añadido correctamente
         });
 
         setLoading(false);
@@ -98,6 +100,7 @@ const ProfileTopSection = () => {
   const followers = store.followers?.length ?? 0;
   const following = store.following?.length ?? 0;
   const language = store.language;
+  const avatarURL = useBoundStore((x) => x.avatarURL); // ✅ acceder correctamente
 
   if (loading) {
     return <p className="text-gray-400">Cargando perfil...</p>;
@@ -105,9 +108,22 @@ const ProfileTopSection = () => {
 
   return (
     <section className="flex flex-row-reverse border-b-2 border-gray-200 pb-8 md:flex-row md:gap-8">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-gray-400 text-3xl font-bold text-gray-400 md:h-44 md:w-44 md:text-7xl">
-        {username?.charAt(0).toUpperCase()}
-      </div>
+      {/* Avatar o inicial */}
+      {avatarURL ? (
+        <Image
+          src={avatarURL}
+          alt="Avatar"
+          width={176}
+          height={176}
+          className="rounded-full md:h-44 md:w-44 object-cover"
+        />
+      ) : (
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-gray-400 text-3xl font-bold text-gray-400 md:h-44 md:w-44 md:text-7xl">
+          {username?.charAt(0).toUpperCase()}
+        </div>
+      )}
+
+      {/* Info del usuario */}
       <div className="flex grow flex-col justify-between gap-3">
         <div className="flex flex-col gap-2">
           <div>
@@ -127,6 +143,7 @@ const ProfileTopSection = () => {
         </div>
         {language && <Flag language={language} width={40} />}
       </div>
+
       <Link
         href="/settings/account"
         className="hidden items-center gap-2 self-start rounded-2xl border-b-4 border-blue-500 bg-blue-400 px-5 py-3 font-bold uppercase text-white transition hover:brightness-110 md:flex"
