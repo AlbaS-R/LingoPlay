@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
 import React, { useEffect, useState } from "react";
 import { BottomBar } from "~/components/BottomBar";
+import { AvatarSelector } from "~/components/AvatarSelector";
 import { LeftBar } from "~/components/LeftBar";
 import { TopBar } from "~/components/TopBar";
 import { SettingsRightNav } from "~/components/SettingsRightNav";
@@ -150,6 +151,7 @@ const Account: NextPage = () => {
               <div>Email: <span className="font-medium text-gray-800">{email}</span></div>
               <div>Fecha de creación: <span className="font-medium text-gray-800">{fechaCreacion}</span></div>
             </div>
+            <AvatarSelector />
           </div>
 
           <SettingsRightNav selectedTab="Account" />

@@ -7,6 +7,7 @@ import { useLoginScreen, LoginScreen } from "~/components/LoginScreen";
 import _bgSnow from "../../public/bg-snow.svg";
 import type { StaticImageData } from "next/image";
 import { LanguageCarousel } from "~/components/LanguageCarousel";
+import { playClickSound } from "~/utils/soundPlayer";
 
 const bgSnow = _bgSnow as StaticImageData;
 
@@ -27,13 +28,19 @@ const Home: NextPage = () => {
           <div className="mx-auto mt-4 flex w-fit flex-col items-center gap-3">
             <button
               className="w-full rounded-2xl border-b-4 border-green-700 bg-green-600 px-10 py-3 text-center font-bold uppercase transition hover:border-green-600 hover:bg-green-500 md:min-w-[320px]"
-              onClick={() => setLoginScreenState("SIGNUP")}
+              onClick={() =>{
+                playClickSound();
+               setLoginScreenState("SIGNUP");
+              }}
             >
               Start
             </button>
             <button
               className="w-full rounded-2xl border-2 border-b-4 border-[#042c60] bg-[#235390] px-8 py-3 font-bold uppercase transition hover:bg-[#204b82] md:min-w-[320px]"
-              onClick={() => setLoginScreenState("LOGIN")}
+              onClick={() => {
+               playClickSound();
+               setLoginScreenState("LOGIN");
+              }}
             >
               I already have an account{" "}
             </button>
