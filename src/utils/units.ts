@@ -65,7 +65,6 @@ export const units: readonly Unit[] = [
     ],
   },
   {
-    unitName : "Jocs de veu",
     unitNumber: 3,
     description: "Order food and drink",
     backgroundColor: "bg-[#60A5FA]",  // mantens el fons clar
