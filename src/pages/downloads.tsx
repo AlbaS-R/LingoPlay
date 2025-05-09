@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { LeftBar } from "~/components/LeftBar";
 import { RightBar } from "~/components/RightBar";
 import { BottomBar } from "~/components/BottomBar";
+import { ReactNode } from "react";
 import type { Tile, TileType, Unit } from "~/utils/units";
 import { units } from "~/utils/units";
 
@@ -15,22 +16,26 @@ const UnitHeader = ({
   description,
   backgroundColor,
   borderColor,
+  children,
 }: {
   unitName: string;
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
   borderColor: `border-${string}`;
+  children?: ReactNode;
 }) => {
   return (
     <article
-      className={["max-w-2xl text-white sm:rounded-xl", backgroundColor, borderColor].join(" ")}
+      className={["max-w-2xl text-white sm:rounded-xl mb-6", backgroundColor, borderColor].join(" ")}
     >
       <header className="flex items-center justify-between gap-4 p-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-2xl font-bold">{unitName}</h2>
+          <p className="text-sm">{description}</p>
         </div>
       </header>
+      {children && <div className="p-4">{children}</div>}
     </article>
   );
 };
@@ -60,13 +65,14 @@ const Downloads: NextPage = () => {
     }, [open]);
 
     return (
+
       <div>
         <Button
           ref={anchorRef}
           onClick={handleToggle}
-          aria-controls={open ? "menu-list" : undefined}
-          aria-expanded={open ? "true" : undefined}
-          aria-haspopup="true"
+          className="bg-blue-600 text-white font-bold hover:bg-blue-700"
+          disableElevation
+          variant="contained"
         >
           {label}
         </Button>
@@ -112,35 +118,54 @@ const Downloads: NextPage = () => {
           <p>Aquí puedes descargar archivos.</p>
           <Link href="/" className="text-blue-500 underline">Volver a inicio</Link>
 
-          <div className="flex justify-center mt-6 space-x-4">
-            <MenuListComposition label="Jocs de memòria" />
-            <MenuListComposition label="Jocs de lògica" />
-            <MenuListComposition label="Puzzles visuals" />
-            <MenuListComposition label="Dictats auditivos" />
-          </div>
-
-          <div className="mt-8">
+          <div className="flex flex-col items-center justify-center flex-grow">
             <UnitHeader
-              unitName="Unitat 1"
+              unitName="Jocs de memòria"
               unitNumber={1}
               description="Una breve descripción de la unidad 1."
-              backgroundColor="bg-blue-500"
-              borderColor="border-blue-700"
-            />
+              backgroundColor="bg-blue-200"
+              borderColor="border-blue-300"
+            >
+              <div className="flex justify-center mt-4 space-x-4">
+                <MenuListComposition label="Jocs de memòria" />
+              </div>
+            </UnitHeader>
+
+
             <UnitHeader
-              unitName="Unitat 2"
+              unitName="Jocs de lògica"
               unitNumber={2}
               description="Una breve descripción de la unidad 2."
-              backgroundColor="bg-green-500"
-              borderColor="border-green-700"
-            />
+              backgroundColor="bg-blue-300"
+              borderColor="border-blue-400"
+            >
+              <div className="flex justify-center mt-4 space-x-4">
+                <MenuListComposition label="Jocs de lògica" />
+
+              </div>
+            </UnitHeader>
             <UnitHeader
-              unitName="Unitat 3"
+              unitName="Dictats auditivos"
               unitNumber={3}
               description="Una breve descripción de la unidad 3."
-              backgroundColor="bg-red-500"
-              borderColor="border-red-700"
-            />
+              backgroundColor="bg-blue-400"
+              borderColor="border-blue-600"
+            >
+              <div className="flex justify-center mt-4 space-x-4">
+                <MenuListComposition label="Dictats auditivos" />
+              </div>
+            </UnitHeader>
+            <UnitHeader
+              unitName="Puzzles visuals"
+              unitNumber={4}
+              description="Una breve descripción de la unidad 3."
+              backgroundColor="bg-blue-500"
+              borderColor="border-blue-700"
+            >
+              <div className="flex justify-center mt-4 space-x-4">
+                <MenuListComposition label="Puzzles visuals" />
+              </div>
+            </UnitHeader>
           </div>
         </main>
         <RightBar />
