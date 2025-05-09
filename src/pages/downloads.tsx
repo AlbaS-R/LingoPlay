@@ -27,7 +27,7 @@ const UnitHeader = ({
 }) => {
   return (
     <article
-      className={["max-w-2xl text-white sm:rounded-xl mb-6", backgroundColor, borderColor].join(" ")}
+      className={["max-w-4xl w-full text-white sm:rounded-xl mb-8", backgroundColor, borderColor].join(" ")}
     >
       <header className="flex items-center justify-between gap-4 p-4">
         <div className="flex flex-col gap-1">
@@ -93,6 +93,7 @@ const Downloads: NextPage = () => {
                   <MenuList
                     autoFocusItem={open}
                     onKeyDown={handleListKeyDown}
+                    className="grid grid-cols-2 gap-2" // Aquí agregamos grid y las columnas
                   >
                     <MenuItem onClick={handleClose}>Exercici 1</MenuItem>
                     <MenuItem onClick={handleClose}>Exercici 2</MenuItem>
@@ -126,7 +127,7 @@ const Downloads: NextPage = () => {
               backgroundColor="bg-blue-200"
               borderColor="border-blue-300"
             >
-              <div className="flex justify-center mt-4 space-x-4">
+              <div className="flex justify-end mt-4 pr-6 space-x-4">
                 <MenuListComposition label="Jocs de memòria" />
               </div>
             </UnitHeader>
@@ -139,7 +140,7 @@ const Downloads: NextPage = () => {
               backgroundColor="bg-blue-300"
               borderColor="border-blue-400"
             >
-              <div className="flex justify-center mt-4 space-x-4">
+              <div className="flex justify-end mt-4 pr-6 space-x-4">
                 <MenuListComposition label="Jocs de lògica" />
 
               </div>
@@ -151,7 +152,7 @@ const Downloads: NextPage = () => {
               backgroundColor="bg-blue-400"
               borderColor="border-blue-600"
             >
-              <div className="flex justify-center mt-4 space-x-4">
+              <div className="flex justify-end mt-4 pr-6 space-x-4">
                 <MenuListComposition label="Dictats auditivos" />
               </div>
             </UnitHeader>
@@ -162,7 +163,7 @@ const Downloads: NextPage = () => {
               backgroundColor="bg-blue-500"
               borderColor="border-blue-700"
             >
-              <div className="flex justify-center mt-4 space-x-4">
+              <div className="flex justify-end mt-4 pr-6 space-x-4">
                 <MenuListComposition label="Puzzles visuals" />
               </div>
             </UnitHeader>
