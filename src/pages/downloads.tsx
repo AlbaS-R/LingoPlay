@@ -128,7 +128,7 @@ const Downloads: NextPage = () => {
               borderColor="border-blue-300"
             >
               <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Jocs de memòria" />
+                <MenuListComposition label="Descarrega" />
               </div>
             </UnitHeader>
 
@@ -141,7 +141,7 @@ const Downloads: NextPage = () => {
               borderColor="border-blue-400"
             >
               <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Jocs de lògica" />
+                <MenuListComposition label="Descarrega" />
 
               </div>
             </UnitHeader>
@@ -153,7 +153,7 @@ const Downloads: NextPage = () => {
               borderColor="border-blue-600"
             >
               <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Dictats auditivos" />
+                <MenuListComposition label="Descarrega" />
               </div>
             </UnitHeader>
             <UnitHeader
@@ -164,7 +164,7 @@ const Downloads: NextPage = () => {
               borderColor="border-blue-700"
             >
               <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Puzzles visuals" />
+                <MenuListComposition label="Descarrega" />
               </div>
             </UnitHeader>
           </div>
