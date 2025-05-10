@@ -68,7 +68,7 @@ export const LeftBar = ({ selectedTab }: { selectedTab?: Tab }) => {
           {bottomBarItems.map((item) => {
             const isActive = activeTab === item.name;
             return (
-              <li key={item.href} className="flex flex-1">
+              <li key={item.name} className="flex flex-1">
                 <Link
                   href={item.href}
                   className={`flex min-h-[44px] grow items-center gap-3 rounded-xl px-2 py-1 text-sm font-bold uppercase transition-colors duration-200 ${

@@ -52,7 +52,7 @@ export const AvatarSelector = () => {
               className="rounded-full"
             />
           ) : (
-            <span className="text-gray-500">Selecciona un avatar</span>
+            <span className="text-gray-500">Select an avatar</span>
           )}
           <span className="ml-2">▼</span>
         </button>
@@ -82,7 +82,7 @@ export const AvatarSelector = () => {
           disabled={!selectedAvatar}
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >
-          Guardar avatar
+          Save avatar
         </button>
       </div>
     </div>
