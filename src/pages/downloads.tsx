@@ -93,7 +93,7 @@ const Downloads: NextPage = () => {
                   <MenuList
                     autoFocusItem={open}
                     onKeyDown={handleListKeyDown}
-                    className="grid grid-cols-2 gap-2" // Aquí agregamos grid y las columnas
+                    className="grid grid-cols-2 gap-2" 
                   >
                     <MenuItem onClick={handleClose}>Exercici 1</MenuItem>
                     <MenuItem onClick={handleClose}>Exercici 2</MenuItem>
