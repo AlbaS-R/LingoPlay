@@ -209,7 +209,7 @@ export const BottomBar = ({ selectedTab }: BottomBarProps) => {
       <ul className="flex h-[88px]">
         {bottomBarItems.map((item) => (
           <li
-            key={item.href}
+            key={item.name}
             className="flex flex-1 items-center justify-center"
           >
             <Link
