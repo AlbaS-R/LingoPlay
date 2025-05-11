@@ -1,13 +1,14 @@
 import type { NextPage } from "next";
 import React, { useEffect, useState } from "react";
-import { BottomBar } from "~/components/BottomBar";
+// import { BottomBar } from "~/components/BottomBar";
 import { AvatarSelector } from "~/components/AvatarSelector";
-import { LeftBar } from "~/components/LeftBar";
+// import { LeftBar } from "~/components/LeftBar";
 import { TopBar } from "~/components/TopBar";
 import { SettingsRightNav } from "~/components/SettingsRightNav";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import { auth, db } from "~/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+
 
 const Account: NextPage = () => {
   const store = useBoundStore();
@@ -36,7 +37,7 @@ const Account: NextPage = () => {
       }
     });
   }, []); 
-    // 🔧 Función que devuelve un objeto language con tipos exactos (evita error TS)
+    // Función que devuelve un objeto language con tipos exactos (evita error TS)
     const getLanguageObject = (code: "es" | "en") => {
       if (code === "es") {
         return {
@@ -59,7 +60,7 @@ const Account: NextPage = () => {
     const handleSave = async () => {
       const user = auth.currentUser;
       if (!user) {
-        setMessage("❌ Usuario no autenticado");
+        setMessage("Usuario no autenticado");
         return;
       }
     
@@ -77,10 +78,10 @@ const Account: NextPage = () => {
         store.setUsername(localUsername);
         store.setLanguage(selectedLanguage);
     
-        setMessage("✅ Cambios guardados correctamente");
+        setMessage(" Cambios guardados correctamente");
       } catch (err) {
         console.error(err);
-        setMessage("❌ Error al guardar los cambios");
+        setMessage(" Error al guardar los cambios");
       }
     };
     
@@ -93,8 +94,10 @@ const Account: NextPage = () => {
   return (
     <div>
       <TopBar />
-      <LeftBar selectedTab={null} />
-      <BottomBar selectedTab={null} />
+      
+      {/* <LeftBar selectedTab={undefined}/>
+      <BottomBar selectedTab={undefined} /> */}
+
       <div className="mx-auto flex flex-col gap-5 px-4 py-20 sm:py-10 md:pl-28 lg:pl-72">
         <div className="mx-auto flex w-full max-w-xl items-center justify-between lg:max-w-4xl">
           <h1 className="text-lg font-bold text-gray-800 sm:text-2xl">Account</h1>
@@ -149,9 +152,10 @@ const Account: NextPage = () => {
             {/* Campos no editables */}
             <div className="mt-8 flex flex-col gap-2 text-sm text-gray-500">
               <div>Email: <span className="font-medium text-gray-800">{email}</span></div>
-              <div>Fecha de creación: <span className="font-medium text-gray-800">{fechaCreacion}</span></div>
+              <div>Date created:  <span className="font-medium text-gray-800">{fechaCreacion}</span></div>
             </div>
             <AvatarSelector />
+            
           </div>
 
           <SettingsRightNav selectedTab="Account" />

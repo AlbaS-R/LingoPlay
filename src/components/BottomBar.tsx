@@ -9,7 +9,7 @@ type BottomBarItem = {
   icon: JSX.Element;
 };
 
-export type Tab = "Exercises" | "Downloads" | "Profile" | "Multiplayer";
+export type Tab = "Exercises" | "Downloads" | "Profile" | "Multiplayer" | "Leaderboards";
 
 export const useBottomBarItems = () => {
   const loggedIn = useBoundStore((x) => x.loggedIn);
@@ -59,34 +59,13 @@ export const useBottomBarItems = () => {
           fill="none"
           className="h-[50px] w-[50px]"
         >
+          <rect x="6" y="36" width="34" height="4" rx="2" fill="#A56644" />
           <path
-            d="M40 36V17H6V36C6 38.2091 7.73969 40 9.88571 40H36.1143C38.2603 40 40 38.2091 40 36Z"
-            fill="#A56644"
-          />
-          <path d="M4 10C4 7.79086 5.79086 6 8 6H17V17H4V10Z" fill="#EA2B2B" />
-          <path
-            d="M4 17H17V17.5C17 21.0899 14.0899 24 10.5 24C6.91015 24 4 21.0899 4 17.5V17Z"
+            d="M23 6C21.8954 6 21 6.89543 21 8V25.17L16.41 20.59C15.63 19.81 14.37 19.81 13.59 20.59C12.81 21.37 12.81 22.63 13.59 23.41L21.59 31.41C22.37 32.19 23.63 32.19 24.41 31.41L32.41 23.41C33.19 22.63 33.19 21.37 32.41 20.59C31.63 19.81 30.37 19.81 29.59 20.59L25 25.17V8C25 6.89543 24.1046 6 23 6Z"
             fill="#FF4945"
           />
           <path
-            d="M17 17H29V17.5C29 21.0899 26.3137 24 23 24C19.6863 24 17 21.0899 17 17.5V17Z"
-            fill="white"
-          />
-          <path
-            d="M29 17H42V17.5C42 21.0899 39.0899 24 35.5 24C31.9101 24 29 21.0899 29 17.5V17Z"
-            fill="#FF4945"
-          />
-          <path d="M17 6H29V17H17V6Z" fill="#D0D0D0" />
-          <path
-            d="M29 6H38C40.2091 6 42 7.79086 42 10V17H29V6Z"
-            fill="#EA2B2B"
-          />
-          <path
-            d="M11 30C11 28.8954 11.8954 28 13 28H18C19.1046 28 20 28.8954 20 30V40H11V30Z"
-            fill="#B9E8FF"
-          />
-          <path
-            d="M24 30C24 28.8954 24.8954 28 26 28H34C35.1046 28 36 28.8954 36 30V34C36 35.1046 35.1046 36 34 36H26C24.8954 36 24 35.1046 24 34V30Z"
+            d="M10 36C10 34.3431 11.3431 33 13 33H33C34.6569 33 36 34.3431 36 36V38C36 39.6569 34.6569 41 33 41H13C11.3431 41 10 39.6569 10 38V36Z"
             fill="#B9E8FF"
           />
         </svg>
@@ -138,7 +117,7 @@ export const useBottomBarItems = () => {
     },
     {
       name: "Multiplayer",
-      href: loggedIn ? "/Multiplayer" : "/learn?sign-up",
+      href: loggedIn ? "/multiplayer" : "/learn?sign-up",
       icon: (
         <svg
           width="46"
@@ -148,12 +127,14 @@ export const useBottomBarItems = () => {
           className="h-[50px] w-[50px]"
         >
           <rect x="6" y="36" width="34" height="4" rx="2" fill="#A56644" />
+          <circle cx="16" cy="16" r="4" fill="#FF4945" />
+          <circle cx="30" cy="16" r="4" fill="#FF4945" />
           <path
-            d="M23 6C21.8954 6 21 6.89543 21 8V25.17L16.41 20.59C15.63 19.81 14.37 19.81 13.59 20.59C12.81 21.37 12.81 22.63 13.59 23.41L21.59 31.41C22.37 32.19 23.63 32.19 24.41 31.41L32.41 23.41C33.19 22.63 33.19 21.37 32.41 20.59C31.63 19.81 30.37 19.81 29.59 20.59L25 25.17V8C25 6.89543 24.1046 6 23 6Z"
-            fill="#FF4945"
+            d="M12 26C12 23.7909 13.7909 22 16 22H16C18.2091 22 20 23.7909 20 26V28H12V26Z"
+            fill="#B9E8FF"
           />
           <path
-            d="M10 36C10 34.3431 11.3431 33 13 33H33C34.6569 33 36 34.3431 36 36V38C36 39.6569 34.6569 41 33 41H13C11.3431 41 10 39.6569 10 38V36Z"
+            d="M26 26C26 23.7909 27.7909 22 30 22H30C32.2091 22 34 23.7909 34 26V28H26V26Z"
             fill="#B9E8FF"
           />
         </svg>
@@ -209,14 +190,14 @@ export const BottomBar = ({ selectedTab }: BottomBarProps) => {
       <ul className="flex h-[88px]">
         {bottomBarItems.map((item) => (
           <li
-            key={item.href}
+            key={item.name}
             className="flex flex-1 items-center justify-center"
           >
             <Link
               href={item.href}
               className={`flex min-h-[44px] grow items-center justify-center gap-3 rounded-xl px-2 py-1 text-sm font-bold uppercase transition-colors duration-200 ${activeTab === item.name
-                  ? "border-2 border-[#84d8ff] bg-[#ddf4ff] text-blue-400"
-                  : "border-2 border-transparent text-gray-400 hover:bg-gray-100"
+                ? "border-2 border-[#84d8ff] bg-[#ddf4ff] text-blue-400"
+                : "border-2 border-transparent text-gray-400 hover:bg-gray-100"
                 } `}
               onClick={() => setActiveTab(item.name)}
             >

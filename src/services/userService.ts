@@ -1,5 +1,5 @@
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig"; 
+import { db } from "../firebaseConfig";
 import { getAuth } from "firebase/auth";
 
 type ProgressUpdate = {
@@ -11,7 +11,7 @@ type ProgressUpdate = {
   following?: string[];
 };
 
-//  Obtener datos de un usuario desde Firebase
+// ✅ Obtener datos de un usuario desde Firebase
 export const getUserProfile = async (userId: string) => {
   const docRef = doc(db, "usuarios", userId);
   const docSnap = await getDoc(docRef);
@@ -30,20 +30,21 @@ export const getUserProfile = async (userId: string) => {
       followers: data.followers,
       following: data.following,
       fecha_creacion: data.fecha_creacion,
-      avatarURL: data.avatarURL || null, // ✅ AVATAR AQUÍ
+      avatarURL: data.avatarURL || null,
+      dailyGoal: data.dailyGoal || 30, // 🔁 también puedes devolver esto si lo necesitas
     };
   } else {
     throw new Error("Usuario no encontrado");
   }
 };
- 
 
-//  Actualizar datos de un usuario en Firebase
+// ✅ Actualizar datos del usuario
 export const updateUserProfile = async (userId: string, data: any) => {
   const userRef = doc(db, "usuarios", userId);
   await updateDoc(userRef, data);
 };
-//  Actualizar solo el progreso (XP, streak, logros...)
+
+// ✅ Actualizar progreso (XP, streak, etc.)
 export const updateUserProgress = async (progress: ProgressUpdate) => {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -55,6 +56,34 @@ export const updateUserProgress = async (progress: ProgressUpdate) => {
     await updateDoc(userRef, progress);
     console.log("✅ Progreso actualizado en Firestore:", progress);
   } catch (error) {
-    console.error("❌ Error al actualizar progreso:", error);
+    console.error(" Error al actualizar progreso:", error);
+  }
+};
+
+// ✅ Guardar la meta diaria del usuario
+export const updateDailyGoal = async (userId: string, dailyGoal: number) => {
+  console.log("📤 updateDailyGoal ejecutado con:", { userId, dailyGoal }); // 👈
+  const userRef = doc(db, "usuarios", userId);
+  try {
+    await updateDoc(userRef, { dailyGoal });
+    console.log("✅ Meta diaria guardada en Firestore:", dailyGoal);
+  } catch (error) {
+    console.error("❌ Error al guardar meta diaria:", error);
+  }
+};
+
+// ✅ Obtener la meta diaria del usuario (👈 necesario para que aparezca la actual)
+export const getUserDailyGoal = async (userId: string): Promise<number | null> => {
+  const userRef = doc(db, "usuarios", userId);
+  try {
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return data.dailyGoal ?? null;
+    }
+    return null;
+  } catch (error) {
+    console.error("❌ Error al obtener dailyGoal:", error);
+    return null;
   }
 };

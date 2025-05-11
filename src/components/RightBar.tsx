@@ -136,12 +136,6 @@ export const RightBar = () => {
                 <p className="text-sm font-normal text-gray-400">
                   You have {lingots} {lingots === 1 ? "lingot" : "lingots"}.
                 </p>
-                <Link
-                  className="uppercase text-blue-400 transition hover:brightness-110"
-                  href="/shop"
-                >
-                  Go to shop
-                </Link>
               </div>
             </div>
           </span>
