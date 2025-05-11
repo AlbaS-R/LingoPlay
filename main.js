@@ -1,37 +1,39 @@
 const { app, BrowserWindow } = require("electron");
+const serve = require("electron-serve");
 const path = require("path");
-const { exec } = require("child_process");
 
-let mainWindow;
-let nextProcess;
+const appServe = app.isPackaged ? serve({
+  directory: path.join(__dirname, "../out")
+}) : null;
 
-app.whenReady().then(async () => {
-  const isDev = (await import("electron-is-dev")).default;
-
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+const createWindow = () => {
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
     webPreferences: {
-      nodeIntegration: true,
-    },
+      preload: path.join(__dirname, "preload.js")
+    }
   });
 
-  if (!isDev) {
-    nextProcess = exec("npm run start");
+  if (app.isPackaged) {
+    appServe(win).then(() => {
+      win.loadURL("app://-");
+    });
+  } else {
+    win.loadURL("http://localhost:3000");
+    win.webContents.openDevTools();
+    win.webContents.on("did-fail-load", (e, code, desc) => {
+      win.webContents.reloadIgnoringCache();
+    });
   }
+}
 
-  setTimeout(() => {
-    mainWindow.loadURL("http://localhost:3000");
-  }, 3000);
-
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-    if (nextProcess) nextProcess.kill();
-  });
+app.on("ready", () => {
+    createWindow();
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+    if(process.platform !== "darwin"){
+        app.quit();
+    }
 });

@@ -36,7 +36,7 @@ const Account: NextPage = () => {
       }
     });
   }, []); 
-    // 🔧 Función que devuelve un objeto language con tipos exactos (evita error TS)
+    // Función que devuelve un objeto language con tipos exactos (evita error TS)
     const getLanguageObject = (code: "es" | "en") => {
       if (code === "es") {
         return {
@@ -59,7 +59,7 @@ const Account: NextPage = () => {
     const handleSave = async () => {
       const user = auth.currentUser;
       if (!user) {
-        setMessage("❌ Usuario no autenticado");
+        setMessage("Usuario no autenticado");
         return;
       }
     
@@ -77,10 +77,10 @@ const Account: NextPage = () => {
         store.setUsername(localUsername);
         store.setLanguage(selectedLanguage);
     
-        setMessage("✅ Cambios guardados correctamente");
+        setMessage(" Cambios guardados correctamente");
       } catch (err) {
         console.error(err);
-        setMessage("❌ Error al guardar los cambios");
+        setMessage(" Error al guardar los cambios");
       }
     };
     
@@ -93,7 +93,7 @@ const Account: NextPage = () => {
   return (
     <div>
       <TopBar />
-      {/* <LeftBar selectedTab="Account"/>
+      {/* <LeftBar selectedTab={null}/>
       <BottomBar selectedTab="Account" /> */}
       <div className="mx-auto flex flex-col gap-5 px-4 py-20 sm:py-10 md:pl-28 lg:pl-72">
         <div className="mx-auto flex w-full max-w-xl items-center justify-between lg:max-w-4xl">

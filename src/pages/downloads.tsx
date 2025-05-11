@@ -93,7 +93,7 @@ const Downloads: NextPage = () => {
                   <MenuList
                     autoFocusItem={open}
                     onKeyDown={handleListKeyDown}
-                    className="grid grid-cols-2 gap-2" 
+                    className="grid grid-cols-2 gap-2"
                   >
                     <MenuItem onClick={handleClose}>Exercici 1</MenuItem>
                     <MenuItem onClick={handleClose}>Exercici 2</MenuItem>
@@ -112,65 +112,72 @@ const Downloads: NextPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex flex-1">
+      <div className="flex flex-col md:flex-row flex-1">
         <LeftBar />
-        <main className="flex-1 p-4">
-          <h1 className="text-2xl font-bold">Downloads Page</h1>
-          <p>Aquí puedes descargar archivos.</p>
-          <Link href="/" className="text-blue-500 underline">Volver a inicio</Link>
 
-          <div className="flex flex-col items-center justify-center flex-grow">
-            <UnitHeader
-              unitName="Jocs de memòria"
-              unitNumber={1}
-              description="Una breve descripción de la unidad 1."
-              backgroundColor="bg-blue-200"
-              borderColor="border-blue-300"
-            >
-              <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Descarrega" />
-              </div>
-            </UnitHeader>
+        <main className="flex justify-center gap-3 pt-14 sm:p-6 sm:pt-10 md:ml-24 lg:ml-64 lg:gap-12 flex-1">
+          <div className="flex max-w-4xl w-full flex-col">
+            <h1 className="text-2xl font-bold mb-2">Downloads Page</h1>
+            <p className="mb-4">Aquí puedes descargar archivos.</p>
+            <Link href="/" className="text-blue-500 underline mb-6 block">
+              Volver a inicio
+            </Link>
 
+            <div className="flex flex-col space-y-6">
+              <UnitHeader
+                unitName="Jocs de memòria"
+                unitNumber={1}
+                description="Una breve descripción de la unidad 1."
+                backgroundColor="bg-blue-200"
+                borderColor="border-blue-300"
+              >
+                <div className="flex justify-end mt-4 pr-6 space-x-4">
+                  <MenuListComposition label="Descarrega" />
+                </div>
+              </UnitHeader>
 
-            <UnitHeader
-              unitName="Jocs de lògica"
-              unitNumber={2}
-              description="Una breve descripción de la unidad 2."
-              backgroundColor="bg-blue-300"
-              borderColor="border-blue-400"
-            >
-              <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Descarrega" />
+              <UnitHeader
+                unitName="Jocs de lògica"
+                unitNumber={2}
+                description="Una breve descripción de la unidad 2."
+                backgroundColor="bg-blue-300"
+                borderColor="border-blue-400"
+              >
+                <div className="flex justify-end mt-4 pr-6 space-x-4">
+                  <MenuListComposition label="Descarrega" />
+                </div>
+              </UnitHeader>
 
-              </div>
-            </UnitHeader>
-            <UnitHeader
-              unitName="Dictats auditivos"
-              unitNumber={3}
-              description="Una breve descripción de la unidad 3."
-              backgroundColor="bg-blue-400"
-              borderColor="border-blue-600"
-            >
-              <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Descarrega" />
-              </div>
-            </UnitHeader>
-            <UnitHeader
-              unitName="Puzzles visuals"
-              unitNumber={4}
-              description="Una breve descripción de la unidad 3."
-              backgroundColor="bg-blue-500"
-              borderColor="border-blue-700"
-            >
-              <div className="flex justify-end mt-4 pr-6 space-x-4">
-                <MenuListComposition label="Descarrega" />
-              </div>
-            </UnitHeader>
+              <UnitHeader
+                unitName="Dictats auditivos"
+                unitNumber={3}
+                description="Una breve descripción de la unidad 3."
+                backgroundColor="bg-blue-400"
+                borderColor="border-blue-600"
+              >
+                <div className="flex justify-end mt-4 pr-6 space-x-4">
+                  <MenuListComposition label="Descarrega" />
+                </div>
+              </UnitHeader>
+
+              <UnitHeader
+                unitName="Puzzles visuals"
+                unitNumber={4}
+                description="Una breve descripción de la unidad 4."
+                backgroundColor="bg-blue-500"
+                borderColor="border-blue-700"
+              >
+                <div className="flex justify-end mt-4 pr-6 space-x-4">
+                  <MenuListComposition label="Descarrega" />
+                </div>
+              </UnitHeader>
+            </div>
           </div>
         </main>
+
         <RightBar />
       </div>
+
       <BottomBar />
     </div>
   );
