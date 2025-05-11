@@ -3,6 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
+import * as React from 'react';
+import Stack from '@mui/material/Stack';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 const Lesson: NextPage = () => {
   const router = useRouter();
@@ -26,7 +30,7 @@ const Lesson: NextPage = () => {
 
   const hearts =
     "fast-forward" in router.query &&
-    !isNaN(Number(router.query["fast-forward"]))
+      !isNaN(Number(router.query["fast-forward"]))
       ? 3 - incorrectAnswerCount
       : null;
 
@@ -101,7 +105,20 @@ const Lesson: NextPage = () => {
     endTime.current = Date.now();
   };
 
-  if (!currentProblem) return <div>Loading...</div>;
+
+
+  if (!currentProblem) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
+        <Stack spacing={3} direction="row" alignItems="center">
+          <CircularProgress size="4rem" />
+        </Stack>
+        <h1 className="text-2xl font-bold">Loading ...</h1>
+      </div>
+    );
+  }
+  
+  
 
   if (correctAnswerCount >= totalCorrectAnswersNeeded && !correctAnswerShown) {
     const formatTime = (timeMs: number): string => {
@@ -132,7 +149,7 @@ const Lesson: NextPage = () => {
               {Math.round(
                 (correctAnswerCount /
                   (correctAnswerCount + incorrectAnswerCount)) *
-                  100,
+                100,
               )}
               %
             </div>

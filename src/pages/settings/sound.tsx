@@ -40,8 +40,9 @@ const Sound: NextPage = () => {
   return (
     <div>
       <TopBar />
-      <LeftBar selectedTab={undefined} />
-      <BottomBar selectedTab={undefined} />
+
+      {/* <LeftBar selectedTab={null} />
+      <BottomBar selectedTab={null} /> */}
 
       <div className="mx-auto flex flex-col gap-5 px-4 py-20 sm:py-10 md:pl-28 lg:pl-72">
         <div className="mx-auto flex w-full max-w-xl items-center justify-between lg:max-w-4xl">

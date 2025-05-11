@@ -172,12 +172,6 @@ export const TopBar = ({
                         You have {lingots}{" "}
                         {lingots === 1 ? "lingot" : "lingots"}.
                       </p>
-                      <Link
-                        className="font-bold uppercase text-blue-400 transition hover:brightness-110"
-                        href="/shop"
-                      >
-                        Go to shop
-                      </Link>
                     </div>
                   </div>
                 );

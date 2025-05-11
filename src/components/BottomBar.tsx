@@ -9,7 +9,7 @@ type BottomBarItem = {
   icon: JSX.Element;
 };
 
-export type Tab = "Exercises" | "Downloads" | "Profile" | "Multiplayer";
+export type Tab = "Exercises" | "Downloads" | "Profile" | "Multiplayer" | "Leaderboards";
 
 export const useBottomBarItems = () => {
   const loggedIn = useBoundStore((x) => x.loggedIn);
