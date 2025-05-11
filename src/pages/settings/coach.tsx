@@ -4,8 +4,18 @@ import React, { useState } from "react";
 import { BottomBar } from "~/components/BottomBar";
 import { LeftBar } from "~/components/LeftBar";
 import { TopBar } from "~/components/TopBar";
-import { useBoundStore } from "~/hooks/useBoundStore";
 import { SettingsRightNav } from "~/components/SettingsRightNav";
+import { useBoundStore } from "~/hooks/useBoundStore";
+import { updateDailyGoal } from "~/services/userService";
+import { auth } from "~/firebaseConfig";
+
+const goalXpOptions = [
+  { title: "Basic", xp: 1 },
+  { title: "Casual", xp: 10 },
+  { title: "Regular", xp: 20 },
+  { title: "Serious", xp: 30 },
+  { title: "Intense", xp: 50 },
+] as const;
 
 const CoachSvg = (props: ComponentProps<"svg">) => {
   return (
@@ -128,24 +138,38 @@ const CoachSvg = (props: ComponentProps<"svg">) => {
   );
 };
 
-const goalXpOptions = [
-  { title: "Basic", xp: 1 },
-  { title: "Casual", xp: 10 },
-  { title: "Regular", xp: 20 },
-  { title: "Serious", xp: 30 },
-  { title: "Intense", xp: 50 },
-] as const;
-
 const Coach: NextPage = () => {
   const goalXp = useBoundStore((x) => x.goalXp);
   const setGoalXp = useBoundStore((x) => x.setGoalXp);
-
   const [localGoalXp, setLocalGoalXp] = useState(goalXp);
+
+  const handleSave = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("No has iniciado sesión");
+      return;
+    }
+
+    try {
+      console.log("👤 UID:", user.uid);
+      console.log("🎯 XP a guardar:", localGoalXp);
+      await updateDailyGoal(user.uid, localGoalXp); // 🔥 guarda en Firebase
+      setGoalXp(localGoalXp); // ✅ actualiza estado local
+      alert("Meta diaria actualizada correctamente ✅");
+    } catch (error) {
+      console.error("❌ Error al guardar en Firebase:", error);
+      alert("Hubo un error al guardar la meta diaria.");
+    }
+  };
+
   return (
     <div>
       <TopBar />
+
       {/* <LeftBar selectedTab={null} />
       <BottomBar selectedTab={null} /> */}
+
+
       <div className="mx-auto flex flex-col gap-5 px-4 py-20 sm:py-10 md:pl-28 lg:pl-72">
         <div className="mx-auto flex w-full max-w-xl items-center justify-between lg:max-w-4xl">
           <h1 className="text-lg font-bold text-gray-800 sm:text-2xl">
@@ -153,7 +177,7 @@ const Coach: NextPage = () => {
           </h1>
           <button
             className="rounded-2xl border-b-4 border-green-600 bg-green-500 px-5 py-3 font-bold uppercase text-white transition hover:brightness-110 disabled:border-b-0 disabled:bg-gray-200 disabled:text-gray-400 disabled:hover:brightness-100"
-            onClick={() => setGoalXp(localGoalXp)}
+            onClick={handleSave}
             disabled={localGoalXp === goalXp}
           >
             Save changes
