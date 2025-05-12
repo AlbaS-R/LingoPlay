@@ -11,7 +11,6 @@ type ProgressUpdate = {
   following?: string[];
 };
 
-// ✅ Obtener datos de un usuario desde Firebase
 export const getUserProfile = async (userId: string) => {
   const docRef = doc(db, "usuarios", userId);
   const docSnap = await getDoc(docRef);
@@ -31,20 +30,18 @@ export const getUserProfile = async (userId: string) => {
       following: data.following,
       fecha_creacion: data.fecha_creacion,
       avatarURL: data.avatarURL || null,
-      dailyGoal: data.dailyGoal || 30, // 🔁 también puedes devolver esto si lo necesitas
+      dailyGoal: data.dailyGoal || 30,
     };
   } else {
     throw new Error("Usuario no encontrado");
   }
 };
 
-// ✅ Actualizar datos del usuario
 export const updateUserProfile = async (userId: string, data: any) => {
   const userRef = doc(db, "usuarios", userId);
   await updateDoc(userRef, data);
 };
 
-// ✅ Actualizar progreso (XP, streak, etc.)
 export const updateUserProgress = async (progress: ProgressUpdate) => {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -60,7 +57,6 @@ export const updateUserProgress = async (progress: ProgressUpdate) => {
   }
 };
 
-// ✅ Guardar la meta diaria del usuario
 export const updateDailyGoal = async (userId: string, dailyGoal: number) => {
   console.log("📤 updateDailyGoal ejecutado con:", { userId, dailyGoal }); // 👈
   const userRef = doc(db, "usuarios", userId);
@@ -72,8 +68,9 @@ export const updateDailyGoal = async (userId: string, dailyGoal: number) => {
   }
 };
 
-// ✅ Obtener la meta diaria del usuario (👈 necesario para que aparezca la actual)
-export const getUserDailyGoal = async (userId: string): Promise<number | null> => {
+export const getUserDailyGoal = async (
+  userId: string,
+): Promise<number | null> => {
   const userRef = doc(db, "usuarios", userId);
   try {
     const docSnap = await getDoc(userRef);

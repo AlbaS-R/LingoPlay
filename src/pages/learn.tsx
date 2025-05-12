@@ -35,8 +35,8 @@ import { useBoundStore } from "~/hooks/useBoundStore";
 import type { Tile, TileType, Unit } from "~/utils/units";
 import { units } from "~/utils/units";
 import { useAuth } from "~/context/AuthContext";
-import { doc, getDoc } from "firebase/firestore"; // Importamos funciones de Firebase
-import { db } from "../firebaseConfig"; // Asegúrate de que la configuración de Firebase esté correctamente importada
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 type TileStatus = "LOCKED" | "ACTIVE" | "COMPLETE";
 
@@ -45,32 +45,20 @@ const tileStatus = (tile: Tile, lessonsCompleted: number): TileStatus => {
   const tiles = units.flatMap((unit) => unit.tiles);
   const tileIndex = tiles.findIndex((t) => t === tile);
 
-  console.log(
-    "Tile:",
-    tile,
-    "Tile Index:",
-    tileIndex,
-    "Lessons Completed:",
-    lessonsCompleted,
-  );
-
   if (tileIndex === -1) {
-    console.log("Tile not found, returning LOCKED");
-    return "LOCKED"; // Si el tile no se encuentra, se considera bloqueado
+    return "LOCKED";
   }
 
   const lessonsRequired = tileIndex * lessonsPerTile;
 
   if (lessonsCompleted >= lessonsRequired + lessonsPerTile) {
-    console.log("Tile is COMPLETE");
-    return "COMPLETE"; // Tile completado
+    return "COMPLETE";
   }
   if (lessonsCompleted >= lessonsRequired) {
-    console.log("Tile is ACTIVE");
-    return "ACTIVE"; // Tile activo (desbloqueado)
+    return "ACTIVE";
   }
-  console.log("Tile is LOCKED");
-  return "LOCKED"; // Tile bloqueado
+
+  return "LOCKED";
 };
 
 const TileIcon = ({
@@ -341,9 +329,6 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
 
   const lessonsCompleted = useBoundStore((x) => x.lessonsCompleted);
 
-  console.log("Initial lessonsCompleted value:", lessonsCompleted);
-  console.log("Unit:", unit.unitName, "Lessons Completed:", lessonsCompleted);
-
   const increaseLessonsCompleted = useBoundStore(
     (x) => x.increaseLessonsCompleted,
   );
@@ -351,7 +336,20 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
 
   const handleTileCompletion = (tile: Tile) => {
     if (tile.type !== "treasure") {
-      increaseLessonsCompleted(1); // Increment lessons completed by 1
+      increaseLessonsCompleted(1);
+    }
+  };
+
+  const handleTileClick = (tile: Tile, index: number) => {
+    const status = tileStatus(tile, lessonsCompleted);
+
+    if (tile.type === "fast-forward" && status === "LOCKED") {
+      void router.push(`/lesson?fast-forward=${unit.unitNumber}`);
+      return;
+    }
+
+    if (status === "ACTIVE") {
+      setSelectedTile(index);
     }
   };
 
@@ -367,7 +365,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
       <div className="relative mb-8 mt-[67px] flex max-w-2xl flex-col items-center gap-4">
         {unit.tiles.map((tile, i): JSX.Element => {
           const status = tileStatus(tile, lessonsCompleted);
-          console.log("Tile Index:", i, "Tile Status:", status);
+
           return (
             <Fragment key={i}>
               {(() => {
@@ -419,21 +417,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                               defaultColors: `${unit.borderColor} ${unit.backgroundColor}`,
                             }),
                           ].join(" ")}
-                          onClick={() => {
-                            if (
-                              tile.type === "fast-forward" &&
-                              status === "LOCKED"
-                            ) {
-                              void router.push(
-                                `/lesson?fast-forward=${unit.unitNumber}`,
-                              );
-                              return;
-                            }
-                            if (status === "ACTIVE") {
-                              handleTileCompletion(tile);
-                              setSelectedTile(i);
-                            }
-                          }}
+                          onClick={() => handleTileClick(tile, i)}
                         >
                           <TileIcon tileType={tile.type} status={status} />
                           <span className="sr-only">Show lesson</span>
@@ -523,11 +507,11 @@ const getTopBarColors = (
 };
 
 const Learn: NextPage = () => {
-  const { user } = useAuth(); // Obtenemos el usuario autenticado
-  const setLessonsCompleted = useBoundStore((x) => x.setLessonsCompleted); // Función para actualizar el estado global
+  const { user } = useAuth();
+  const setLessonsCompleted = useBoundStore((x) => x.setLessonsCompleted);
   const [lessonsCompleted, setLocalLessonsCompleted] = useState<number | null>(
     null,
-  ); // Estado local para depuración
+  );
 
   useEffect(() => {
     const fetchLessonsCompleted = async () => {
@@ -537,19 +521,15 @@ const Learn: NextPage = () => {
       }
 
       try {
-        const userRef = doc(db, "usuarios", user.uid); // Ruta a la colección de usuarios en Firebase
+        const userRef = doc(db, "usuarios", user.uid);
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
           const data = userDoc.data();
           const lessonsCompletedFromFirebase = data.lessonsCompleted ?? 0;
-          console.log(
-            "Fetched lessonsCompleted from Firebase:",
-            lessonsCompletedFromFirebase,
-          );
 
-          setLocalLessonsCompleted(lessonsCompletedFromFirebase); // Actualizamos el estado local
-          setLessonsCompleted(lessonsCompletedFromFirebase); // Sincronizamos con el estado global
+          setLocalLessonsCompleted(lessonsCompletedFromFirebase);
+          setLessonsCompleted(lessonsCompletedFromFirebase);
         } else {
           console.warn("User document does not exist in Firebase.");
         }

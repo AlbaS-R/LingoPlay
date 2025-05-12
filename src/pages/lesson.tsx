@@ -7,10 +7,10 @@ import * as React from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useAuth } from "~/context/AuthContext";
-import { useBoundStore } from "~/hooks/useBoundStore"; // Importar useBoundStore
+import { useBoundStore } from "~/hooks/useBoundStore";
 
 const Lesson: NextPage = () => {
-  const { user } = useAuth(); // Access the authenticated user
+  const { user } = useAuth();
   const router = useRouter();
 
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
@@ -36,7 +36,7 @@ const Lesson: NextPage = () => {
       ? 3 - incorrectAnswerCount
       : null;
 
-  const [buttonsDisabled, setButtonsDisabled] = useState(false); // New state to control button visibility
+  const [buttonsDisabled, setButtonsDisabled] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,7 +88,7 @@ const Lesson: NextPage = () => {
 
   const onCheckAnswer = () => {
     setCorrectAnswerShown(true);
-    setButtonsDisabled(true); // Disable buttons after checking the answer
+    setButtonsDisabled(true);
     if (isAnswerCorrect) setCorrectAnswerCount((x) => x + 1);
     else setIncorrectAnswerCount((x) => x + 1);
 
@@ -104,11 +104,11 @@ const Lesson: NextPage = () => {
   };
 
   const saveProgressToFirebase = async (updatedLessonsCompleted: number) => {
-    if (!user) return; // Ensure the user is logged in
+    if (!user) return;
     try {
       const userRef = doc(db, "usuarios", user.uid);
       await updateDoc(userRef, {
-        lessonsCompleted: updatedLessonsCompleted, // Save the number of completed lessons
+        lessonsCompleted: updatedLessonsCompleted,
       });
     } catch (error) {
       console.error("Error saving progress to Firebase:", error);
@@ -119,11 +119,19 @@ const Lesson: NextPage = () => {
     setSelectedAnswer(null);
     setCorrectAnswerShown(false);
     setButtonsDisabled(false);
-    setLessonProblemIndex((prev) => prev + 1);
 
-    const updatedLessonsCompleted = correctAnswerCount + 1; // Incrementar progreso
-    await saveProgressToFirebase(updatedLessonsCompleted); // Guardar en Firebase
-    useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted }); // Actualizar estado global
+    // Solo incrementamos el índice si hay más problemas
+    if (lessonProblemIndex < lessonProblems.length - 1) {
+      setLessonProblemIndex((prev) => prev + 1);
+    } else {
+      console.log("Lesson completed. Updating progress...");
+      const currentLessonsCompleted = useBoundStore.getState().lessonsCompleted;
+      const updatedLessonsCompleted = currentLessonsCompleted + 1;
+
+      // Guardamos el progreso en Firebase y actualizamos el estado global
+      await saveProgressToFirebase(updatedLessonsCompleted);
+      useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted });
+    }
   };
 
   if (lessonProblemIndex >= lessonProblems.length) {

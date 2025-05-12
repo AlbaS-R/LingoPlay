@@ -45,7 +45,6 @@ export type BoundStateCreator<SliceState> = StateCreator<
   SliceState
 >;
 
-//  Crea el store combinando todos los slices
 export const useBoundStore = create<BoundState>((set, get, api) => ({
   ...createGoalXpSlice(set, get, api),
   ...createLanguageSlice(set, get, api),
@@ -56,7 +55,7 @@ export const useBoundStore = create<BoundState>((set, get, api) => ({
   ...createUserSlice(set, get, api),
   ...createXpSlice(set, get, api),
   setLessonsCompleted: (value: number) => {
-    set({ lessonsCompleted: value }); // Actualizamos el estado global con el nuevo valor
+    set({ lessonsCompleted: value });
   },
   increaseLessonsCompleted: (increment = 1) => {
     set((state: BoundState) => ({
