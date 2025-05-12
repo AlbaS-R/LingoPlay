@@ -11,6 +11,7 @@ import {
   GoldenDumbbellSvg,
   GoldenTreasureSvg,
   GoldenTrophySvg,
+  GuidebookSvg,
   LessonCompletionSvg0,
   LessonCompletionSvg1,
   LessonCompletionSvg2,
@@ -210,6 +211,7 @@ const TileTooltip = ({
   description,
   status,
   closeTooltip,
+  unitName,
 }: {
   selectedTile: number | null;
   index: number;
@@ -218,6 +220,7 @@ const TileTooltip = ({
   description: string;
   status: TileStatus;
   closeTooltip: () => void;
+  unitName: string;
 }) => {
   const tileTooltipRef = useRef<HTMLDivElement | null>(null);
 
@@ -477,6 +480,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                 })()}
                 status={status}
                 closeTooltip={closeTooltip}
+                unitName={unit.unitName}
               />
             </Fragment>
           );
@@ -664,7 +668,11 @@ const UnitHeader = ({
   backgroundColor,
   borderColor,
 }: {
-  unitName: String;
+
+
+
+  unitName : string,
+
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
@@ -682,6 +690,21 @@ const UnitHeader = ({
           <h2 className="text-2xl font-bold">{unitName}</h2>
           <p className="text-lg">{description}</p>
         </div>
+
+
+        <Link
+          href={`https://duolingo.com/guidebook/${language.code}/${unitNumber}`}
+          className={[
+            "flex items-center gap-3 rounded-2xl border-2 border-b-4 p-3 transition hover:text-gray-100",
+            borderColor,
+          ].join(" ")}
+        >
+          <GuidebookSvg />
+          <span className="sr-only font-bold uppercase lg:not-sr-only">
+            Guidebook
+          </span>
+        </Link>
+
       </header>
     </article>
   );
