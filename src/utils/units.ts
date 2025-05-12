@@ -1,5 +1,5 @@
 export type Unit = {
-  unitName : String;
+  unitName : string;
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
