@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "~/firebaseConfig"; // Importamos `db` desde la configuración de Firebase
 import { doc, getDoc, updateDoc } from "firebase/firestore"; // Importamos las funciones necesarias de Firestore
+import { useBoundStore } from "~/hooks/useBoundStore";
 
 type AuthContextType = {
   user: User | null;
@@ -21,6 +22,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+
+      // Actualizamos el estado de loggedIn en useBoundStore
+      useBoundStore.setState({ loggedIn: !!currentUser });
     });
 
     return () => unsubscribe();
@@ -32,7 +36,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userDoc = await getDoc(doc(db, "usuarios", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          console.log("Fetched user data from Firebase:", data);
           setLessonsCompleted(data.lessonsCompleted || 0); // Actualizamos el estado local
         }
       }
@@ -43,7 +46,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const saveProgressToFirebase = async (lessonsCompleted: number) => {
     if (!user) return;
     try {
-      console.log("Saving lessonsCompleted to Firebase:", lessonsCompleted);
       const userRef = doc(db, "usuarios", user.uid);
       await updateDoc(userRef, { lessonsCompleted });
     } catch (error) {

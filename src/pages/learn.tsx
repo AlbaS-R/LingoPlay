@@ -507,7 +507,7 @@ const getTopBarColors = (
 };
 
 const Learn: NextPage = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const setLessonsCompleted = useBoundStore((x) => x.setLessonsCompleted);
   const [lessonsCompleted, setLocalLessonsCompleted] = useState<number | null>(
     null,
@@ -515,6 +515,7 @@ const Learn: NextPage = () => {
 
   useEffect(() => {
     const fetchLessonsCompleted = async () => {
+      if (loading) return; // Espera a que el estado de autenticación esté listo
       if (!user) {
         console.warn("User is not logged in.");
         return;
@@ -539,7 +540,7 @@ const Learn: NextPage = () => {
     };
 
     fetchLessonsCompleted();
-  }, [user, setLessonsCompleted]);
+  }, [user, loading, setLessonsCompleted]);
 
   const { loginScreenState, setLoginScreenState } = useLoginScreen();
 

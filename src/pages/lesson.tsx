@@ -10,7 +10,7 @@ import { useAuth } from "~/context/AuthContext";
 import { useBoundStore } from "~/hooks/useBoundStore";
 
 const Lesson: NextPage = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
@@ -40,47 +40,54 @@ const Lesson: NextPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const docRef = doc(db, "ejerciciosES", "ej1");
-      const docSnap = await getDoc(docRef);
+      if (loading) return; // Espera a que el estado de autenticación esté listo
+      if (!user) return;
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const {
-          preguntas,
-          respuestas_correctas,
-          opciones1,
-          opciones2,
-          opciones3,
-          opciones4,
-          opciones5,
-        } = data;
-        const opcionesArrays = [
-          opciones1,
-          opciones2,
-          opciones3,
-          opciones4,
-          opciones5,
-        ];
+      try {
+        const docRef = doc(db, "ejerciciosES", "ej1");
+        const docSnap = await getDoc(docRef);
 
-        const loadedProblems = preguntas.map(
-          (question: string, index: number) => {
-            return {
-              type: "SELECT_1_OF_3",
-              question,
-              answers: opcionesArrays[index].map((opt: string) => ({
-                name: opt,
-              })),
-              correctAnswer: opcionesArrays[index].indexOf(
-                respuestas_correctas[index],
-              ),
-            };
-          },
-        );
-        setLessonProblems(loadedProblems);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const {
+            preguntas,
+            respuestas_correctas,
+            opciones1,
+            opciones2,
+            opciones3,
+            opciones4,
+            opciones5,
+          } = data;
+          const opcionesArrays = [
+            opciones1,
+            opciones2,
+            opciones3,
+            opciones4,
+            opciones5,
+          ];
+
+          const loadedProblems = preguntas.map(
+            (question: string, index: number) => {
+              return {
+                type: "SELECT_1_OF_3",
+                question,
+                answers: opcionesArrays[index].map((opt: string) => ({
+                  name: opt,
+                })),
+                correctAnswer: opcionesArrays[index].indexOf(
+                  respuestas_correctas[index],
+                ),
+              };
+            },
+          );
+          setLessonProblems(loadedProblems);
+        }
+      } catch (error) {
+        // Error manejado silenciosamente
       }
     };
     fetchData();
-  }, []);
+  }, [user, loading]);
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -120,15 +127,12 @@ const Lesson: NextPage = () => {
     setCorrectAnswerShown(false);
     setButtonsDisabled(false);
 
-    // Solo incrementamos el índice si hay más problemas
     if (lessonProblemIndex < lessonProblems.length - 1) {
       setLessonProblemIndex((prev) => prev + 1);
     } else {
-      console.log("Lesson completed. Updating progress...");
       const currentLessonsCompleted = useBoundStore.getState().lessonsCompleted;
       const updatedLessonsCompleted = currentLessonsCompleted + 1;
 
-      // Guardamos el progreso en Firebase y actualizamos el estado global
       await saveProgressToFirebase(updatedLessonsCompleted);
       useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted });
     }
@@ -305,14 +309,22 @@ const Lesson: NextPage = () => {
 
         {correctAnswerShown && (
           <div
-            className={`rounded-xl p-4 text-center font-bold ${isAnswerCorrect ? "bg-green-100 text-green-800" : "bg-rose-100 text-rose-600"}`}
+            className={`rounded-xl p-4 text-center font-bold ${
+              isAnswerCorrect
+                ? "bg-green-100 text-green-800"
+                : "bg-rose-100 text-rose-600"
+            }`}
           >
             {isAnswerCorrect
               ? "Good job!"
               : `Correct answer: ${currentProblem.answers[currentProblem.correctAnswer].name}`}
             <button
               onClick={onFinish}
-              className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${isAnswerCorrect ? "border-green-600 bg-green-500" : "border-rose-600 bg-rose-500"}`}
+              className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${
+                isAnswerCorrect
+                  ? "border-green-600 bg-green-500"
+                  : "border-rose-600 bg-rose-500"
+              }`}
             >
               Continue
             </button>
