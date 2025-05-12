@@ -46,10 +46,10 @@ const tileStatus = (tile: Tile, lessonsCompleted: number): TileStatus => {
   if (tileIndex < tilesCompleted) {
     return "COMPLETE";
   }
-  if (tileIndex > tilesCompleted) {
-    return "LOCKED";
+  if (tileIndex === tilesCompleted) {
+    return "ACTIVE";
   }
-  return "ACTIVE";
+  return "LOCKED";
 };
 
 const TileIcon = ({
@@ -324,6 +324,12 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
   );
   const increaseLingots = useBoundStore((x) => x.increaseLingots);
 
+  const handleTileCompletion = (tile: Tile) => {
+    if (tile.type !== "treasure") {
+      increaseLessonsCompleted(1); // Increment lessons completed by 1
+    }
+  };
+
   return (
     <>
       <UnitHeader
@@ -397,7 +403,10 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                               );
                               return;
                             }
-                            setSelectedTile(i);
+                            if (status === "ACTIVE") {
+                              handleTileCompletion(tile);
+                              setSelectedTile(i);
+                            }
                           }}
                         >
                           <TileIcon tileType={tile.type} status={status} />
@@ -606,7 +615,7 @@ const UnitHeader = ({
   backgroundColor,
   borderColor,
 }: {
-  unitName : String,
+  unitName: String;
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
@@ -624,7 +633,6 @@ const UnitHeader = ({
           <h2 className="text-2xl font-bold">{unitName}</h2>
           <p className="text-lg">{description}</p>
         </div>
-      
       </header>
     </article>
   );

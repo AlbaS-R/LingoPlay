@@ -1,14 +1,15 @@
 import type { NextPage } from "next";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import * as React from 'react';
-import Stack from '@mui/material/Stack';
-import CircularProgress from '@mui/material/CircularProgress';
-
+import * as React from "react";
+import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useAuth } from "~/context/AuthContext";
 
 const Lesson: NextPage = () => {
+  const { user } = useAuth(); // Access the authenticated user
   const router = useRouter();
 
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
@@ -30,9 +31,11 @@ const Lesson: NextPage = () => {
 
   const hearts =
     "fast-forward" in router.query &&
-      !isNaN(Number(router.query["fast-forward"]))
+    !isNaN(Number(router.query["fast-forward"]))
       ? 3 - incorrectAnswerCount
       : null;
+
+  const [buttonsDisabled, setButtonsDisabled] = useState(false); // New state to control button visibility
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,6 +87,7 @@ const Lesson: NextPage = () => {
 
   const onCheckAnswer = () => {
     setCorrectAnswerShown(true);
+    setButtonsDisabled(true); // Disable buttons after checking the answer
     if (isAnswerCorrect) setCorrectAnswerCount((x) => x + 1);
     else setIncorrectAnswerCount((x) => x + 1);
 
@@ -98,14 +102,29 @@ const Lesson: NextPage = () => {
     ]);
   };
 
+  const saveProgressToFirebase = async () => {
+    if (!user) return; // Ensure the user is logged in
+    try {
+      const userRef = doc(db, "usuarios", user.uid);
+      await updateDoc(userRef, {
+        lessonsCompleted: correctAnswerCount, // Save the number of completed lessons
+      });
+    } catch (error) {
+      console.error("Error saving progress to Firebase:", error);
+    }
+  };
+
   const onFinish = () => {
     setSelectedAnswer(null);
     setCorrectAnswerShown(false);
+    setButtonsDisabled(false); // Re-enable buttons for the next question
     setLessonProblemIndex((prev) => prev + 1);
     endTime.current = Date.now();
+
+    if (correctAnswerCount >= totalCorrectAnswersNeeded) {
+      void saveProgressToFirebase(); // Save progress when the lesson is completed
+    }
   };
-
-
 
   if (!currentProblem) {
     return (
@@ -117,8 +136,6 @@ const Lesson: NextPage = () => {
       </div>
     );
   }
-  
-  
 
   if (correctAnswerCount >= totalCorrectAnswersNeeded && !correctAnswerShown) {
     const formatTime = (timeMs: number): string => {
@@ -149,7 +166,7 @@ const Lesson: NextPage = () => {
               {Math.round(
                 (correctAnswerCount /
                   (correctAnswerCount + incorrectAnswerCount)) *
-                100,
+                  100,
               )}
               %
             </div>
@@ -206,14 +223,16 @@ const Lesson: NextPage = () => {
       </main>
 
       <footer className="flex flex-col gap-2">
-        <button
-          className="rounded-2xl border-2 border-b-4 border-gray-200 p-3 text-gray-400 hover:border-gray-300 hover:bg-gray-100"
-          onClick={() => setCorrectAnswerShown(true)}
-        >
-          Skip
-        </button>
+        {!buttonsDisabled && (
+          <button
+            className="rounded-2xl border-2 border-b-4 border-gray-200 p-3 text-gray-400 hover:border-gray-300 hover:bg-gray-100"
+            onClick={() => setCorrectAnswerShown(true)}
+          >
+            Skip
+          </button>
+        )}
 
-        {selectedAnswer === null ? (
+        {!buttonsDisabled && selectedAnswer === null ? (
           <button
             disabled
             className="rounded-2xl bg-gray-200 p-3 text-gray-400"
@@ -221,12 +240,14 @@ const Lesson: NextPage = () => {
             Check
           </button>
         ) : (
-          <button
-            onClick={onCheckAnswer}
-            className="rounded-2xl border-b-4 border-green-600 bg-green-500 p-3 font-bold text-white"
-          >
-            Check
-          </button>
+          !buttonsDisabled && (
+            <button
+              onClick={onCheckAnswer}
+              className="rounded-2xl border-b-4 border-green-600 bg-green-500 p-3 font-bold text-white"
+            >
+              Check
+            </button>
+          )
         )}
 
         {correctAnswerShown && (

@@ -1,11 +1,11 @@
 import { type AppType } from "next/dist/shared/lib/utils";
 import Head from "next/head";
-
 import "~/styles/globals.css";
+import { AuthProvider } from "~/context/AuthContext";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
-    <>
+    <AuthProvider>
       <Head>
         <title>LingoPlay</title>
         <meta name="description" content="App to learn languages" />
@@ -14,7 +14,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         <link rel="manifest" href="/app.webmanifest" />
       </Head>
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   );
 };
 
