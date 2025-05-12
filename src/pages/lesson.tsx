@@ -7,6 +7,7 @@ import * as React from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useAuth } from "~/context/AuthContext";
+import { useBoundStore } from "~/hooks/useBoundStore"; // Importar useBoundStore
 
 const Lesson: NextPage = () => {
   const { user } = useAuth(); // Access the authenticated user
@@ -102,29 +103,73 @@ const Lesson: NextPage = () => {
     ]);
   };
 
-  const saveProgressToFirebase = async () => {
+  const saveProgressToFirebase = async (updatedLessonsCompleted: number) => {
     if (!user) return; // Ensure the user is logged in
     try {
       const userRef = doc(db, "usuarios", user.uid);
       await updateDoc(userRef, {
-        lessonsCompleted: correctAnswerCount, // Save the number of completed lessons
+        lessonsCompleted: updatedLessonsCompleted, // Save the number of completed lessons
       });
     } catch (error) {
       console.error("Error saving progress to Firebase:", error);
     }
   };
 
-  const onFinish = () => {
+  const onFinish = async () => {
     setSelectedAnswer(null);
     setCorrectAnswerShown(false);
-    setButtonsDisabled(false); // Re-enable buttons for the next question
+    setButtonsDisabled(false);
     setLessonProblemIndex((prev) => prev + 1);
-    endTime.current = Date.now();
 
-    if (correctAnswerCount >= totalCorrectAnswersNeeded) {
-      void saveProgressToFirebase(); // Save progress when the lesson is completed
-    }
+    const updatedLessonsCompleted = correctAnswerCount + 1; // Incrementar progreso
+    await saveProgressToFirebase(updatedLessonsCompleted); // Guardar en Firebase
+    useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted }); // Actualizar estado global
   };
+
+  if (lessonProblemIndex >= lessonProblems.length) {
+    const formatTime = (timeMs: number): string => {
+      const seconds = Math.floor(timeMs / 1000) % 60;
+      const minutes = Math.floor(timeMs / 1000 / 60) % 60;
+      return [minutes, seconds]
+        .map((x) => x.toString().padStart(2, "0"))
+        .join(":");
+    };
+
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+        <h1 className="text-3xl font-bold text-yellow-500">Lesson Complete!</h1>
+        <div className="flex gap-4">
+          <div className="rounded-xl bg-yellow-400 px-4 py-2 text-center text-white">
+            <div>Total XP</div>
+            <div className="text-xl">{correctAnswerCount}</div>
+          </div>
+          <div className="rounded-xl bg-blue-400 px-4 py-2 text-center text-white">
+            <div>Time</div>
+            <div className="text-xl">
+              {formatTime(endTime.current - startTime.current)}
+            </div>
+          </div>
+          <div className="rounded-xl bg-green-400 px-4 py-2 text-center text-white">
+            <div>Accuracy</div>
+            <div className="text-xl">
+              {Math.round(
+                (correctAnswerCount /
+                  (correctAnswerCount + incorrectAnswerCount)) *
+                  100,
+              )}
+              %
+            </div>
+          </div>
+        </div>
+        <a
+          href="/learn"
+          className="rounded-2xl border-b-4 border-green-600 bg-green-500 px-4 py-2 text-white hover:brightness-105"
+        >
+          Continue
+        </a>
+      </div>
+    );
+  }
 
   if (!currentProblem) {
     return (

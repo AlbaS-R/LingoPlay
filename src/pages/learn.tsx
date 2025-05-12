@@ -34,22 +34,41 @@ import { LoginScreen, useLoginScreen } from "~/components/LoginScreen";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import type { Tile, TileType, Unit } from "~/utils/units";
 import { units } from "~/utils/units";
+import { useAuth } from "~/context/AuthContext"; // Importamos el contexto de autenticación
 
 type TileStatus = "LOCKED" | "ACTIVE" | "COMPLETE";
 
 const tileStatus = (tile: Tile, lessonsCompleted: number): TileStatus => {
-  const lessonsPerTile = 4;
-  const tilesCompleted = Math.floor(lessonsCompleted / lessonsPerTile);
+  const lessonsPerTile = 4; // Número de lecciones por tile
   const tiles = units.flatMap((unit) => unit.tiles);
   const tileIndex = tiles.findIndex((t) => t === tile);
 
-  if (tileIndex < tilesCompleted) {
-    return "COMPLETE";
+  console.log(
+    "Tile:",
+    tile,
+    "Tile Index:",
+    tileIndex,
+    "Lessons Completed:",
+    lessonsCompleted,
+  );
+
+  if (tileIndex === -1) {
+    console.log("Tile not found, returning LOCKED");
+    return "LOCKED"; // Si el tile no se encuentra, se considera bloqueado
   }
-  if (tileIndex === tilesCompleted) {
-    return "ACTIVE";
+
+  const lessonsRequired = tileIndex * lessonsPerTile;
+
+  if (lessonsCompleted >= lessonsRequired + lessonsPerTile) {
+    console.log("Tile is COMPLETE");
+    return "COMPLETE"; // Tile completado
   }
-  return "LOCKED";
+  if (lessonsCompleted >= lessonsRequired) {
+    console.log("Tile is ACTIVE");
+    return "ACTIVE"; // Tile activo (desbloqueado)
+  }
+  console.log("Tile is LOCKED");
+  return "LOCKED"; // Tile bloqueado
 };
 
 const TileIcon = ({
@@ -319,6 +338,10 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
   const closeTooltip = useCallback(() => setSelectedTile(null), []);
 
   const lessonsCompleted = useBoundStore((x) => x.lessonsCompleted);
+
+  console.log("Initial lessonsCompleted value:", lessonsCompleted);
+  console.log("Unit:", unit.unitName, "Lessons Completed:", lessonsCompleted);
+
   const increaseLessonsCompleted = useBoundStore(
     (x) => x.increaseLessonsCompleted,
   );
@@ -342,6 +365,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
       <div className="relative mb-8 mt-[67px] flex max-w-2xl flex-col items-center gap-4">
         {unit.tiles.map((tile, i): JSX.Element => {
           const status = tileStatus(tile, lessonsCompleted);
+          console.log("Tile Index:", i, "Tile Status:", status);
           return (
             <Fragment key={i}>
               {(() => {
@@ -497,6 +521,14 @@ const getTopBarColors = (
 };
 
 const Learn: NextPage = () => {
+  const { lessonsCompleted } = useAuth(); // Obtenemos lessonsCompleted desde el contexto
+  const setLessonsCompleted = useBoundStore((x) => x.setLessonsCompleted); // Función para actualizar el estado global
+
+  useEffect(() => {
+    // Sincronizamos lessonsCompleted desde el contexto al estado global
+    setLessonsCompleted(lessonsCompleted);
+  }, [lessonsCompleted, setLessonsCompleted]);
+
   const { loginScreenState, setLoginScreenState } = useLoginScreen();
 
   const [scrollY, setScrollY] = useState(0);

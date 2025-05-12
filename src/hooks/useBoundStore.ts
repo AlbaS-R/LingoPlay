@@ -33,7 +33,9 @@ export type BoundState = GoalXpSlice &
   SoundSettingsSlice &
   StreakSlice &
   UserSlice &
-  XpSlice;
+  XpSlice & {
+    setLessonsCompleted: (value: number) => void; // Nueva función para actualizar lessonsCompleted
+  };
 
 //  Tipo para definir un slice dentro de BoundState
 export type BoundStateCreator<SliceState> = StateCreator<
@@ -44,13 +46,21 @@ export type BoundStateCreator<SliceState> = StateCreator<
 >;
 
 //  Crea el store combinando todos los slices
-export const useBoundStore = create<BoundState>((...args) => ({
-  ...createGoalXpSlice(...args),
-  ...createLanguageSlice(...args),
-  ...createLessonSlice(...args),
-  ...createLingotSlice(...args),
-  ...createSoundSettingsSlice(...args),
-  ...createStreakSlice(...args),
-  ...createUserSlice(...args),
-  ...createXpSlice(...args),
+export const useBoundStore = create<BoundState>((set, get, api) => ({
+  ...createGoalXpSlice(set, get, api),
+  ...createLanguageSlice(set, get, api),
+  ...createLessonSlice(set, get, api),
+  ...createLingotSlice(set, get, api),
+  ...createSoundSettingsSlice(set, get, api),
+  ...createStreakSlice(set, get, api),
+  ...createUserSlice(set, get, api),
+  ...createXpSlice(set, get, api),
+  setLessonsCompleted: (value: number) => {
+    set({ lessonsCompleted: value }); // Actualizamos el estado global con el nuevo valor
+  },
+  increaseLessonsCompleted: (increment = 1) => {
+    set((state: BoundState) => ({
+      lessonsCompleted: state.lessonsCompleted + increment,
+    }));
+  },
 }));
