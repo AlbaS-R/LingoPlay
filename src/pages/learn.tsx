@@ -34,12 +34,14 @@ import { LoginScreen, useLoginScreen } from "~/components/LoginScreen";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import type { Tile, TileType, Unit } from "~/utils/units";
 import { units } from "~/utils/units";
-import { useAuth } from "~/context/AuthContext"; // Importamos el contexto de autenticación
+import { useAuth } from "~/context/AuthContext";
+import { doc, getDoc } from "firebase/firestore"; // Importamos funciones de Firebase
+import { db } from "../firebaseConfig"; // Asegúrate de que la configuración de Firebase esté correctamente importada
 
 type TileStatus = "LOCKED" | "ACTIVE" | "COMPLETE";
 
 const tileStatus = (tile: Tile, lessonsCompleted: number): TileStatus => {
-  const lessonsPerTile = 4; // Número de lecciones por tile
+  const lessonsPerTile = 1;
   const tiles = units.flatMap((unit) => unit.tiles);
   const tileIndex = tiles.findIndex((t) => t === tile);
 
@@ -521,13 +523,43 @@ const getTopBarColors = (
 };
 
 const Learn: NextPage = () => {
-  const { lessonsCompleted } = useAuth(); // Obtenemos lessonsCompleted desde el contexto
+  const { user } = useAuth(); // Obtenemos el usuario autenticado
   const setLessonsCompleted = useBoundStore((x) => x.setLessonsCompleted); // Función para actualizar el estado global
+  const [lessonsCompleted, setLocalLessonsCompleted] = useState<number | null>(
+    null,
+  ); // Estado local para depuración
 
   useEffect(() => {
-    // Sincronizamos lessonsCompleted desde el contexto al estado global
-    setLessonsCompleted(lessonsCompleted);
-  }, [lessonsCompleted, setLessonsCompleted]);
+    const fetchLessonsCompleted = async () => {
+      if (!user) {
+        console.warn("User is not logged in.");
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "usuarios", user.uid); // Ruta a la colección de usuarios en Firebase
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          const lessonsCompletedFromFirebase = data.lessonsCompleted ?? 0;
+          console.log(
+            "Fetched lessonsCompleted from Firebase:",
+            lessonsCompletedFromFirebase,
+          );
+
+          setLocalLessonsCompleted(lessonsCompletedFromFirebase); // Actualizamos el estado local
+          setLessonsCompleted(lessonsCompletedFromFirebase); // Sincronizamos con el estado global
+        } else {
+          console.warn("User document does not exist in Firebase.");
+        }
+      } catch (error) {
+        console.error("Error fetching lessonsCompleted from Firebase:", error);
+      }
+    };
+
+    fetchLessonsCompleted();
+  }, [user, setLessonsCompleted]);
 
   const { loginScreenState, setLoginScreenState } = useLoginScreen();
 
@@ -551,9 +583,13 @@ const Learn: NextPage = () => {
 
       <div className="flex justify-center gap-3 pt-14 sm:p-6 sm:pt-10 md:ml-24 lg:ml-64 lg:gap-12">
         <div className="flex max-w-2xl grow flex-col">
-          {units.map((unit) => (
-            <UnitSection unit={unit} key={unit.unitNumber} />
-          ))}
+          {lessonsCompleted !== null ? (
+            units.map((unit) => (
+              <UnitSection unit={unit} key={unit.unitNumber} />
+            ))
+          ) : (
+            <div>Loading...</div>
+          )}
           <div className="sticky bottom-28 left-0 right-0 flex items-end justify-between">
             {scrollY > 100 && (
               <button
