@@ -35,6 +35,9 @@ export type BoundState = GoalXpSlice &
   UserSlice &
   XpSlice & {
     setLessonsCompleted: (value: number) => void; // Nueva función para actualizar lessonsCompleted
+    unitProgress: Record<number, number>; // unitNumber -> progreso
+    setUnitProgress: (unit: number, value: number) => void;
+    increaseUnitProgress: (unit: number, increment?: number) => void;
   };
 
 //  Tipo para definir un slice dentro de BoundState
@@ -60,6 +63,20 @@ export const useBoundStore = create<BoundState>((set, get, api) => ({
   increaseLessonsCompleted: (increment = 1) => {
     set((state: BoundState) => ({
       lessonsCompleted: state.lessonsCompleted + increment,
+    }));
+  },
+  unitProgress: {},
+  setUnitProgress: (unit, value) => {
+    set((state) => ({
+      unitProgress: { ...state.unitProgress, [unit]: value },
+    }));
+  },
+  increaseUnitProgress: (unit, increment = 1) => {
+    set((state) => ({
+      unitProgress: {
+        ...state.unitProgress,
+        [unit]: (state.unitProgress[unit] || 0) + increment,
+      },
     }));
   },
 }));

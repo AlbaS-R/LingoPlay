@@ -1,5 +1,5 @@
 export type Unit = {
-  unitName : string;
+  unitName: String;
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
@@ -10,7 +10,7 @@ export type Unit = {
 
 export type Tile =
   | {
-      type: "star" | "dumbbell" | "book" | "trophy" | "fast-forward";
+      type: "star" | "dumbbell" | "book" | "trophy" | "fast-forward" | "memory";
       description: string;
     }
   | { type: "treasure" };
@@ -19,58 +19,42 @@ export type TileType = Tile["type"];
 
 export const units: readonly Unit[] = [
   {
-    unitName : "Jocs de memoria",
+    unitName: "Basic exercises",
     unitNumber: 1,
-    description: "Form basic sentences, greet people",
+    description: "Learn basic words",
     backgroundColor: "bg-[#235390]",
     textColor: "text-[#60A5FA]",
     borderColor: "border-[#3b82f6]",
     tiles: [
-      {
-        type: "star",
-        description: "Form basic sentences",
-      },
-      {
-        type: "book",
-        description: "Good morning",
-      },
-      {
-        type: "star",
-        description: "Greet people",
-      },
-      { type: "treasure" },
-      { type: "book", description: "A date" },
+      { type: "star", description: "Form basic sentences" },
+      { type: "book", description: "Good morning" },
+      { type: "star", description: "Greet people" },
+      { type: "book", description: "" },
       { type: "trophy", description: "Unit 1 review" },
     ],
   },
   {
-    unitName : "Excercicis",
+    unitName: "Memory games",
     unitNumber: 2,
-    description: "Get around in a city",
+    description: "Learn while exercising the brain!",
     backgroundColor: "bg-[#4F8FE8]",
     textColor: "text-[#4F8FE8]",
-    borderColor: "border-[#3A6DC4]",   // Blau fosc suau i elegant
+    borderColor: "border-[#3A6DC4]",
     tiles: [
-      { type: "fast-forward", description: "Get around in a city" },
-      { type: "dumbbell", description: "Personalized practice" },
-      { type: "book", description: "One thing" },
-      { type: "treasure" },
+      { type: "book", description: "Dog & Perro" },
       { type: "star", description: "Get around in a city" },
-      { type: "book", description: "A very big family" },
-      { type: "star", description: "Greet people" },
-      { type: "book", description: "The red jacket" },
-      { type: "treasure" },
-      { type: "dumbbell", description: "Personalized practice" },
-      { type: "trophy", description: "Unit 2 review" },
+      { type: "book", description: "House & Casa" },
+      { type: "star", description: "Get around in a city" },
+      { type: "trophy", description: "A very big family" },
     ],
   },
-  { 
-    unitName:"No se que quereis poner",
+  {
+    unitName: "Under Construction",
     unitNumber: 3,
-    description: "Order food and drink",
-    backgroundColor: "bg-[#60A5FA]",  // mantens el fons clar
+    description: "Updates will be available soon!",
+    backgroundColor: "bg-[#60A5FA]",
     textColor: "text-[#60A5FA]",
-    borderColor: "border-[#4C7EDB]",  // nou blau fosc suau
+    borderColor: "border-[#4C7EDB]",
     tiles: [
       { type: "fast-forward", description: "Order food and drink" },
       { type: "book", description: "The passport" },
