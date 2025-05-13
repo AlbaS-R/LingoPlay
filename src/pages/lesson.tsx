@@ -40,12 +40,36 @@ const Lesson: NextPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+
       if (loading) return; // Espera a que el estado de autenticación esté listo
       if (!user) return;
 
       try {
         const docRef = doc(db, "ejerciciosES", "ej1");
         const docSnap = await getDoc(docRef);
+
+      const collectionName = unitNumber === 3 ? "ejerciciosVoz" : "ejerciciosES";
+      const docRef = doc(db, collectionName, "ej1");
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const {
+          preguntas,
+          respuestas_correctas,
+          opciones1,
+          opciones2,
+          opciones3,
+          opciones4,
+          opciones5,
+        } = data;
+        const opcionesArrays = [
+          opciones1,
+          opciones2,
+          opciones3,
+          opciones4,
+          opciones5,
+        ];
+
 
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -87,7 +111,11 @@ const Lesson: NextPage = () => {
       }
     };
     fetchData();
+
   }, [user, loading]);
+
+  }, [unitNumber]);
+
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -360,6 +388,6 @@ const Lesson: NextPage = () => {
       </footer>
     </div>
   );
-};
+
 
 export default Lesson;
