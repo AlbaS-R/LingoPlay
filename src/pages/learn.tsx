@@ -40,24 +40,9 @@ import { db } from "../firebaseConfig";
 
 type TileStatus = "LOCKED" | "ACTIVE" | "COMPLETE";
 
-const tileStatus = (tile: Tile, lessonsCompleted: number): TileStatus => {
-  const lessonsPerTile = 1;
-  const tiles = units.flatMap((unit) => unit.tiles);
-  const tileIndex = tiles.findIndex((t) => t === tile);
-
-  if (tileIndex === -1) {
-    return "LOCKED";
-  }
-
-  const lessonsRequired = tileIndex * lessonsPerTile;
-
-  if (lessonsCompleted >= lessonsRequired + lessonsPerTile) {
-    return "COMPLETE";
-  }
-  if (lessonsCompleted >= lessonsRequired) {
-    return "ACTIVE";
-  }
-
+const tileStatus = (tileIndex: number, unitProgress: number): TileStatus => {
+  if (unitProgress > tileIndex) return "COMPLETE";
+  if (unitProgress === tileIndex) return "ACTIVE";
   return "LOCKED";
 };
 
@@ -314,7 +299,13 @@ const TileTooltip = ({
   );
 };
 
-const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
+const UnitSection = ({
+  unit,
+  unitProgress,
+}: {
+  unit: Unit;
+  unitProgress: number;
+}): JSX.Element => {
   const router = useRouter();
 
   const [selectedTile, setSelectedTile] = useState<null | number>(null);
@@ -341,7 +332,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
   };
 
   const handleTileClick = (tile: Tile, index: number) => {
-    const status = tileStatus(tile, lessonsCompleted);
+    const status = tileStatus(index, unitProgress);
 
     if (tile.type === "fast-forward" && status === "LOCKED") {
       void router.push(`/lesson?fast-forward=${unit.unitNumber}`);
@@ -349,7 +340,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
     }
 
     if (status === "ACTIVE" || status === "COMPLETE") {
-      void router.push(`/lesson?tileIndex=${index}`);
+      void router.push(`/lesson?tileIndex=${index}&unit=${unit.unitNumber}`);
     }
   };
 
@@ -364,7 +355,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
       />
       <div className="relative mb-8 mt-[67px] flex max-w-2xl flex-col items-center gap-4">
         {unit.tiles.map((tile, i): JSX.Element => {
-          const status = tileStatus(tile, lessonsCompleted);
+          const status = tileStatus(i, unitProgress);
 
           return (
             <Fragment key={i}>
@@ -405,7 +396,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                           <HoverLabel text="Start" textColor={unit.textColor} />
                         ) : null}
                         <LessonCompletionSvg
-                          lessonsCompleted={lessonsCompleted}
+                          lessonsCompleted={unitProgress}
                           status={status}
                         />
                         <button
@@ -508,39 +499,29 @@ const getTopBarColors = (
 
 const Learn: NextPage = () => {
   const { user, loading } = useAuth();
-  const setLessonsCompleted = useBoundStore((x) => x.setLessonsCompleted);
-  const [lessonsCompleted, setLocalLessonsCompleted] = useState<number | null>(
-    null,
-  );
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
+  const unitProgress = useBoundStore((x) => x.unitProgress);
 
   useEffect(() => {
-    const fetchLessonsCompleted = async () => {
-      if (loading) return; // Espera a que el estado de autenticación esté listo
-      if (!user) {
-        console.warn("User is not logged in.");
-        return;
-      }
-
+    const fetchProgress = async () => {
+      if (loading) return;
+      if (!user) return;
       try {
         const userRef = doc(db, "usuarios", user.uid);
         const userDoc = await getDoc(userRef);
-
         if (userDoc.exists()) {
           const data = userDoc.data();
-          const lessonsCompletedFromFirebase = data.lessonsCompleted ?? 0;
-
-          setLocalLessonsCompleted(lessonsCompletedFromFirebase);
-          setLessonsCompleted(lessonsCompletedFromFirebase);
-        } else {
-          console.warn("User document does not exist in Firebase.");
+          // Cargar progreso de todas las unidades
+          units.forEach((unit) => {
+            const progress =
+              data[`lessonsCompleted_unit${unit.unitNumber}`] ?? 0;
+            setUnitProgress(unit.unitNumber, progress);
+          });
         }
-      } catch (error) {
-        console.error("Error fetching lessonsCompleted from Firebase:", error);
-      }
+      } catch {}
     };
-
-    fetchLessonsCompleted();
-  }, [user, loading, setLessonsCompleted]);
+    fetchProgress();
+  }, [user, loading, setUnitProgress]);
 
   const { loginScreenState, setLoginScreenState } = useLoginScreen();
 
@@ -564,13 +545,13 @@ const Learn: NextPage = () => {
 
       <div className="flex justify-center gap-3 pt-14 sm:p-6 sm:pt-10 md:ml-24 lg:ml-64 lg:gap-12">
         <div className="flex max-w-2xl grow flex-col">
-          {lessonsCompleted !== null ? (
-            units.map((unit) => (
-              <UnitSection unit={unit} key={unit.unitNumber} />
-            ))
-          ) : (
-            <div>Loading...</div>
-          )}
+          {units.map((unit) => (
+            <UnitSection
+              unit={unit}
+              key={unit.unitNumber}
+              unitProgress={unitProgress[unit.unitNumber] || 0}
+            />
+          ))}
           <div className="sticky bottom-28 left-0 right-0 flex items-end justify-between">
             {scrollY > 100 && (
               <button

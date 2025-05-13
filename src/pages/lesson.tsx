@@ -13,7 +13,11 @@ const Lesson: NextPage = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  const unitNumber = Number(router.query.unit) || 1;
   const tileIndex = Number(router.query.tileIndex) || 0;
+
+  const unitProgress = useBoundStore((x) => x.unitProgress[unitNumber] || 0);
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
 
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
   const [lessonProblems, setLessonProblems] = useState<any[]>([]);
@@ -115,12 +119,12 @@ const Lesson: NextPage = () => {
     else setIncorrectAnswerCount((x) => x + 1);
   };
 
-  const saveProgressToFirebase = async (updatedLessonsCompleted: number) => {
+  const saveProgressToFirebase = async (updatedProgress: number) => {
     if (!user) return;
     try {
       const userRef = doc(db, "usuarios", user.uid);
       await updateDoc(userRef, {
-        lessonsCompleted: updatedLessonsCompleted,
+        [`lessonsCompleted_unit${unitNumber}`]: updatedProgress,
       });
     } catch (error) {
       console.error("Error saving progress to Firebase:", error);
@@ -135,13 +139,11 @@ const Lesson: NextPage = () => {
     if (lessonProblemIndex < lessonProblems.length - 1) {
       setLessonProblemIndex((prev) => prev + 1);
     } else {
-      // Solo incrementa el progreso si el usuario está en la tile correspondiente
-      if (lessonsCompleted === tileIndex) {
-        const updatedLessonsCompleted = lessonsCompleted + 1;
-        await saveProgressToFirebase(updatedLessonsCompleted);
-        useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted });
+      if (unitProgress === tileIndex) {
+        const updatedProgress = unitProgress + 1;
+        await saveProgressToFirebase(updatedProgress);
+        setUnitProgress(unitNumber, updatedProgress);
       }
-      // Si el usuario ya superó esta tile, no se incrementa el progreso
     }
   };
 
