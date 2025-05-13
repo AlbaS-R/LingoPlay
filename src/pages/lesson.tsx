@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { getDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import * as React from "react";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useAuth } from "~/context/AuthContext";
@@ -38,30 +37,19 @@ const Lesson: NextPage = () => {
 
   const [buttonsDisabled, setButtonsDisabled] = useState(false);
 
-  // Obtenemos el progreso actual del usuario
-  const lessonsCompleted = useBoundStore((x) => x.lessonsCompleted);
-
-  // Nuevo estado para saber si los datos están cargando
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-
-
-      if (loading) return; // Espera a que el estado de autenticación esté listo
-
       if (loading) return;
-
       if (!user) return;
 
-      try {
-        const exerciseId = `ej${tileIndex + 1}`;
-        const docRef = doc(db, "ejerciciosES", exerciseId);
-        const docSnap = await getDoc(docRef);
-
+      // Selecciona la colección según la unidad (voz o normal)
       const collectionName = unitNumber === 3 ? "ejerciciosVoz" : "ejerciciosES";
-      const docRef = doc(db, collectionName, "ej1");
-      
+      const exerciseId = `ej${tileIndex + 1}`;
+      const docRef = doc(db, collectionName, exerciseId);
+      const docSnap = await getDoc(docRef);
+
       if (docSnap.exists()) {
         const data = docSnap.data();
         const {
@@ -81,54 +69,29 @@ const Lesson: NextPage = () => {
           opciones5,
         ];
 
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const {
-            preguntas,
-            respuestas_correctas,
-            opciones1,
-            opciones2,
-            opciones3,
-            opciones4,
-            opciones5,
-          } = data;
-          const opcionesArrays = [
-            opciones1,
-            opciones2,
-            opciones3,
-            opciones4,
-            opciones5,
-          ];
-
-          const loadedProblems = preguntas.map(
-            (question: string, index: number) => {
-              return {
-                type: "SELECT_1_OF_3",
-                question,
-                answers: opcionesArrays[index].map((opt: string) => ({
-                  name: opt,
-                })),
-                correctAnswer: opcionesArrays[index].indexOf(
-                  respuestas_correctas[index],
-                ),
-              };
-            },
-          );
-          setLessonProblems(loadedProblems);
-        }
-      } catch (error) {}
-      setIsLoadingProblems(false); // Marcar como cargado (éxito o error)
+        const loadedProblems = preguntas.map(
+          (question: string, index: number) => {
+            return {
+              type: "SELECT_1_OF_3",
+              question,
+              answers: opcionesArrays[index].map((opt: string) => ({
+                name: opt,
+              })),
+              correctAnswer: opcionesArrays[index].indexOf(
+                respuestas_correctas[index],
+              ),
+            };
+          },
+        );
+        setLessonProblems(loadedProblems);
+      }
+      setIsLoadingProblems(false);
     };
-    setIsLoadingProblems(true); // Marcar como cargando antes de iniciar
+    setIsLoadingProblems(true);
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading, tileIndex, unitNumber]);
 
-
-  }, [user, loading]);
-
-  }, [user, loading, tileIndex]);
-
-  // Mostrar loader mientras se cargan los problemas
   if (isLoadingProblems) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
@@ -139,10 +102,6 @@ const Lesson: NextPage = () => {
       </div>
     );
   }
-
-
-  }, [unitNumber]);
-
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -405,6 +364,6 @@ const Lesson: NextPage = () => {
       </footer>
     </div>
   );
-
+};
 
 export default Lesson;
