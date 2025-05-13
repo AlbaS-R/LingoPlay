@@ -348,8 +348,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
       return;
     }
 
-    if (status === "ACTIVE") {
-      // Pasamos el índice de la tile como parámetro en la URL
+    if (status === "ACTIVE" || status === "COMPLETE") {
       void router.push(`/lesson?tileIndex=${index}`);
     }
   };

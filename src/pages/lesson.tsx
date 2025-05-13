@@ -34,6 +34,12 @@ const Lesson: NextPage = () => {
 
   const [buttonsDisabled, setButtonsDisabled] = useState(false);
 
+  // Obtenemos el progreso actual del usuario
+  const lessonsCompleted = useBoundStore((x) => x.lessonsCompleted);
+
+  // Nuevo estado para saber si los datos están cargando
+  const [isLoadingProblems, setIsLoadingProblems] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
       if (loading) return;
@@ -80,9 +86,23 @@ const Lesson: NextPage = () => {
           setLessonProblems(loadedProblems);
         }
       } catch (error) {}
+      setIsLoadingProblems(false); // Marcar como cargado (éxito o error)
     };
+    setIsLoadingProblems(true); // Marcar como cargando antes de iniciar
     fetchData();
   }, [user, loading, tileIndex]);
+
+  // Mostrar loader mientras se cargan los problemas
+  if (isLoadingProblems) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
+        <Stack spacing={3} direction="row" alignItems="center">
+          <CircularProgress size="4rem" />
+        </Stack>
+        <h1 className="text-2xl font-bold">Loading ...</h1>
+      </div>
+    );
+  }
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -115,11 +135,13 @@ const Lesson: NextPage = () => {
     if (lessonProblemIndex < lessonProblems.length - 1) {
       setLessonProblemIndex((prev) => prev + 1);
     } else {
-      const currentLessonsCompleted = useBoundStore.getState().lessonsCompleted;
-      const updatedLessonsCompleted = currentLessonsCompleted + 1;
-
-      await saveProgressToFirebase(updatedLessonsCompleted);
-      useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted });
+      // Solo incrementa el progreso si el usuario está en la tile correspondiente
+      if (lessonsCompleted === tileIndex) {
+        const updatedLessonsCompleted = lessonsCompleted + 1;
+        await saveProgressToFirebase(updatedLessonsCompleted);
+        useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted });
+      }
+      // Si el usuario ya superó esta tile, no se incrementa el progreso
     }
   };
 
