@@ -13,6 +13,12 @@ const Lesson: NextPage = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  const unitNumber = Number(router.query.unit) || 1;
+  const tileIndex = Number(router.query.tileIndex) || 0;
+
+  const unitProgress = useBoundStore((x) => x.unitProgress[unitNumber] || 0);
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
+
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
   const [lessonProblems, setLessonProblems] = useState<any[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<null | number>(null);
@@ -21,14 +27,8 @@ const Lesson: NextPage = () => {
   const [correctAnswerShown, setCorrectAnswerShown] = useState(false);
   const [quitMessageShown, setQuitMessageShown] = useState(false);
 
-  const [questionResults, setQuestionResults] = useState<any[]>([]);
-  const [reviewLessonShown, setReviewLessonShown] = useState(false);
-
   const startTime = useRef(Date.now());
   const endTime = useRef(startTime.current + 1000 * 60 * 3 + 1000 * 33);
-
-  const [isStartingLesson, setIsStartingLesson] = useState(true);
-  const unitNumber = Number(router.query["fast-forward"]);
 
   const hearts =
     "fast-forward" in router.query &&
@@ -38,13 +38,20 @@ const Lesson: NextPage = () => {
 
   const [buttonsDisabled, setButtonsDisabled] = useState(false);
 
+  // Obtenemos el progreso actual del usuario
+  const lessonsCompleted = useBoundStore((x) => x.lessonsCompleted);
+
+  // Nuevo estado para saber si los datos están cargando
+  const [isLoadingProblems, setIsLoadingProblems] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
-      if (loading) return; // Espera a que el estado de autenticación esté listo
+      if (loading) return;
       if (!user) return;
 
       try {
-        const docRef = doc(db, "ejerciciosES", "ej1");
+        const exerciseId = `ej${tileIndex + 1}`;
+        const docRef = doc(db, "ejerciciosES", exerciseId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -82,12 +89,24 @@ const Lesson: NextPage = () => {
           );
           setLessonProblems(loadedProblems);
         }
-      } catch (error) {
-        // Error manejado silenciosamente
-      }
+      } catch (error) {}
+      setIsLoadingProblems(false); // Marcar como cargado (éxito o error)
     };
+    setIsLoadingProblems(true); // Marcar como cargando antes de iniciar
     fetchData();
-  }, [user, loading]);
+  }, [user, loading, tileIndex]);
+
+  // Mostrar loader mientras se cargan los problemas
+  if (isLoadingProblems) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
+        <Stack spacing={3} direction="row" alignItems="center">
+          <CircularProgress size="4rem" />
+        </Stack>
+        <h1 className="text-2xl font-bold">Loading ...</h1>
+      </div>
+    );
+  }
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -98,24 +117,14 @@ const Lesson: NextPage = () => {
     setButtonsDisabled(true);
     if (isAnswerCorrect) setCorrectAnswerCount((x) => x + 1);
     else setIncorrectAnswerCount((x) => x + 1);
-
-    setQuestionResults((prev) => [
-      ...prev,
-      {
-        question: currentProblem.question,
-        yourResponse: currentProblem.answers[selectedAnswer ?? 0]?.name,
-        correctResponse:
-          currentProblem.answers[currentProblem.correctAnswer].name,
-      },
-    ]);
   };
 
-  const saveProgressToFirebase = async (updatedLessonsCompleted: number) => {
+  const saveProgressToFirebase = async (updatedProgress: number) => {
     if (!user) return;
     try {
       const userRef = doc(db, "usuarios", user.uid);
       await updateDoc(userRef, {
-        lessonsCompleted: updatedLessonsCompleted,
+        [`lessonsCompleted_unit${unitNumber}`]: updatedProgress,
       });
     } catch (error) {
       console.error("Error saving progress to Firebase:", error);
@@ -130,11 +139,11 @@ const Lesson: NextPage = () => {
     if (lessonProblemIndex < lessonProblems.length - 1) {
       setLessonProblemIndex((prev) => prev + 1);
     } else {
-      const currentLessonsCompleted = useBoundStore.getState().lessonsCompleted;
-      const updatedLessonsCompleted = currentLessonsCompleted + 1;
-
-      await saveProgressToFirebase(updatedLessonsCompleted);
-      useBoundStore.setState({ lessonsCompleted: updatedLessonsCompleted });
+      if (unitProgress === tileIndex) {
+        const updatedProgress = unitProgress + 1;
+        await saveProgressToFirebase(updatedProgress);
+        setUnitProgress(unitNumber, updatedProgress);
+      }
     }
   };
 
