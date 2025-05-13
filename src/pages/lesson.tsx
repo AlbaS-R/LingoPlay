@@ -13,6 +13,8 @@ const Lesson: NextPage = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  const tileIndex = Number(router.query.tileIndex) || 0;
+
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
   const [lessonProblems, setLessonProblems] = useState<any[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<null | number>(null);
@@ -21,14 +23,8 @@ const Lesson: NextPage = () => {
   const [correctAnswerShown, setCorrectAnswerShown] = useState(false);
   const [quitMessageShown, setQuitMessageShown] = useState(false);
 
-  const [questionResults, setQuestionResults] = useState<any[]>([]);
-  const [reviewLessonShown, setReviewLessonShown] = useState(false);
-
   const startTime = useRef(Date.now());
   const endTime = useRef(startTime.current + 1000 * 60 * 3 + 1000 * 33);
-
-  const [isStartingLesson, setIsStartingLesson] = useState(true);
-  const unitNumber = Number(router.query["fast-forward"]);
 
   const hearts =
     "fast-forward" in router.query &&
@@ -40,11 +36,12 @@ const Lesson: NextPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (loading) return; // Espera a que el estado de autenticación esté listo
+      if (loading) return;
       if (!user) return;
 
       try {
-        const docRef = doc(db, "ejerciciosES", "ej1");
+        const exerciseId = `ej${tileIndex + 1}`;
+        const docRef = doc(db, "ejerciciosES", exerciseId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -82,12 +79,10 @@ const Lesson: NextPage = () => {
           );
           setLessonProblems(loadedProblems);
         }
-      } catch (error) {
-        // Error manejado silenciosamente
-      }
+      } catch (error) {}
     };
     fetchData();
-  }, [user, loading]);
+  }, [user, loading, tileIndex]);
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -98,16 +93,6 @@ const Lesson: NextPage = () => {
     setButtonsDisabled(true);
     if (isAnswerCorrect) setCorrectAnswerCount((x) => x + 1);
     else setIncorrectAnswerCount((x) => x + 1);
-
-    setQuestionResults((prev) => [
-      ...prev,
-      {
-        question: currentProblem.question,
-        yourResponse: currentProblem.answers[selectedAnswer ?? 0]?.name,
-        correctResponse:
-          currentProblem.answers[currentProblem.correctAnswer].name,
-      },
-    ]);
   };
 
   const saveProgressToFirebase = async (updatedLessonsCompleted: number) => {

@@ -336,7 +336,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
 
   const handleTileCompletion = (tile: Tile) => {
     if (tile.type !== "treasure") {
-      increaseLessonsCompleted(1);
+      increaseLessonsCompleted(0);
     }
   };
 
@@ -349,7 +349,8 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
     }
 
     if (status === "ACTIVE") {
-      setSelectedTile(index);
+      // Pasamos el índice de la tile como parámetro en la URL
+      void router.push(`/lesson?tileIndex=${index}`);
     }
   };
 
@@ -437,8 +438,8 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                         ].join(" ")}
                         onClick={() => {
                           if (status === "ACTIVE") {
-                            increaseLessonsCompleted(4);
-                            increaseLingots(1);
+                            increaseLessonsCompleted(1);
+                            increaseLingots(3);
                           }
                         }}
                         role="button"
