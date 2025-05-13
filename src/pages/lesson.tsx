@@ -32,8 +32,10 @@ const Lesson: NextPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const docRef = doc(db, "ejerciciosES", "ej1");
+      const collectionName = unitNumber === 3 ? "ejerciciosVoz" : "ejerciciosES";
+      const docRef = doc(db, collectionName, "ej1");
       const docSnap = await getDoc(docRef);
+
 
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -72,7 +74,7 @@ const Lesson: NextPage = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [unitNumber]);
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
