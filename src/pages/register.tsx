@@ -11,7 +11,6 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "~/firebaseConfig";
 
-// Imagen de fondo
 const bgSnow = _bgSnow as StaticImageData;
 
 const Register: NextPage = () => {
@@ -40,7 +39,11 @@ const Register: NextPage = () => {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
       const user = userCredential.user;
 
       await setDoc(doc(db, "usuarios", user.uid), {
@@ -96,12 +99,11 @@ const Register: NextPage = () => {
             <button
               key={language.name}
               onClick={() => handleLanguageClick(language)}
-              className={`flex flex-col items-center gap-4 rounded-2xl border-2 border-b-4 px-6 py-6 text-lg font-bold 
-                ${
-                  selectedLanguage?.code === language.code
-                    ? "border-yellow-400 bg-white bg-opacity-20"
-                    : "border-gray-400 hover:bg-gray-300 hover:bg-opacity-20"
-                }`}
+              className={`flex flex-col items-center gap-4 rounded-2xl border-2 border-b-4 px-6 py-6 text-lg font-bold ${
+                selectedLanguage?.code === language.code
+                  ? "border-yellow-400 bg-white bg-opacity-20"
+                  : "border-gray-400 hover:bg-gray-300 hover:bg-opacity-20"
+              }`}
             >
               <Flag language={language} />
               <span>{language.name}</span>
@@ -111,12 +113,12 @@ const Register: NextPage = () => {
 
         <form
           onSubmit={handleRegister}
-          className="flex flex-col gap-4 w-full max-w-sm bg-white bg-opacity-90 text-black p-6 rounded-xl shadow-md"
+          className="flex w-full max-w-sm flex-col gap-4 rounded-xl bg-white bg-opacity-90 p-6 text-black shadow-md"
         >
           <input
             type="email"
             placeholder="Correo electrónico"
-            className="border px-3 py-2 rounded"
+            className="rounded border px-3 py-2"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -124,19 +126,19 @@ const Register: NextPage = () => {
           <input
             type="password"
             placeholder="Contraseña"
-            className="border px-3 py-2 rounded"
+            className="rounded border px-3 py-2"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Crear Cuenta
           </button>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          {success && <p className="text-sm text-green-600">{success}</p>}
         </form>
       </div>
     </main>

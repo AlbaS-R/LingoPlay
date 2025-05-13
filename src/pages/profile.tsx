@@ -86,7 +86,7 @@ const ProfileTopSection = () => {
           achievements: data.achievements || {},
           followers: data.followers || [],
           following: data.following || [],
-          avatarURL: data.avatarURL || null, // ✅ añadido correctamente
+          avatarURL: data.avatarURL || null,
         });
 
         setLoading(false);
@@ -100,7 +100,7 @@ const ProfileTopSection = () => {
   const followers = store.followers?.length ?? 0;
   const following = store.following?.length ?? 0;
   const language = store.language;
-  const avatarURL = useBoundStore((x) => x.avatarURL); // ✅ acceder correctamente
+  const avatarURL = useBoundStore((x) => x.avatarURL);
 
   if (loading) {
     return <p className="text-gray-400">Cargando perfil...</p>;
@@ -115,7 +115,7 @@ const ProfileTopSection = () => {
           alt="Avatar"
           width={176}
           height={176}
-          className="rounded-full md:h-44 md:w-44 object-cover"
+          className="rounded-full object-cover md:h-44 md:w-44"
         />
       ) : (
         <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-gray-400 text-3xl font-bold text-gray-400 md:h-44 md:w-44 md:text-7xl">

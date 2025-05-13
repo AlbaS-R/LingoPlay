@@ -1,15 +1,22 @@
 import type { NextPage } from "next";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import * as React from 'react';
-import Stack from '@mui/material/Stack';
-import CircularProgress from '@mui/material/CircularProgress';
-
+import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useAuth } from "~/context/AuthContext";
+import { useBoundStore } from "~/hooks/useBoundStore";
 
 const Lesson: NextPage = () => {
+  const { user, loading } = useAuth();
   const router = useRouter();
+
+  const unitNumber = Number(router.query.unit) || 1;
+  const tileIndex = Number(router.query.tileIndex) || 0;
+
+  const unitProgress = useBoundStore((x) => x.unitProgress[unitNumber] || 0);
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
 
   const [lessonProblemIndex, setLessonProblemIndex] = useState(0);
   const [lessonProblems, setLessonProblems] = useState<any[]>([]);
@@ -19,24 +26,28 @@ const Lesson: NextPage = () => {
   const [correctAnswerShown, setCorrectAnswerShown] = useState(false);
   const [quitMessageShown, setQuitMessageShown] = useState(false);
 
-  const [questionResults, setQuestionResults] = useState<any[]>([]);
-  const [reviewLessonShown, setReviewLessonShown] = useState(false);
-
   const startTime = useRef(Date.now());
   const endTime = useRef(startTime.current + 1000 * 60 * 3 + 1000 * 33);
 
-  const [isStartingLesson, setIsStartingLesson] = useState(true);
-  const unitNumber = Number(router.query["fast-forward"]);
-
   const hearts =
     "fast-forward" in router.query &&
-      !isNaN(Number(router.query["fast-forward"]))
+    !isNaN(Number(router.query["fast-forward"]))
       ? 3 - incorrectAnswerCount
       : null;
 
+  const [buttonsDisabled, setButtonsDisabled] = useState(false);
+
+  const [isLoadingProblems, setIsLoadingProblems] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
-      const docRef = doc(db, "ejerciciosES", "ej1");
+      if (loading) return;
+      if (!user) return;
+
+      // Selecciona la colección según la unidad (voz o normal)
+      const collectionName = unitNumber === 3 ? "ejerciciosVoz" : "ejerciciosES";
+      const exerciseId = `ej${tileIndex + 1}`;
+      const docRef = doc(db, collectionName, exerciseId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -74,9 +85,23 @@ const Lesson: NextPage = () => {
         );
         setLessonProblems(loadedProblems);
       }
+      setIsLoadingProblems(false);
     };
+    setIsLoadingProblems(true);
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading, tileIndex, unitNumber]);
+
+  if (isLoadingProblems) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
+        <Stack spacing={3} direction="row" alignItems="center">
+          <CircularProgress size="4rem" />
+        </Stack>
+        <h1 className="text-2xl font-bold">Loading ...</h1>
+      </div>
+    );
+  }
 
   const totalCorrectAnswersNeeded = lessonProblems.length;
   const currentProblem = lessonProblems[lessonProblemIndex];
@@ -84,28 +109,83 @@ const Lesson: NextPage = () => {
 
   const onCheckAnswer = () => {
     setCorrectAnswerShown(true);
+    setButtonsDisabled(true);
     if (isAnswerCorrect) setCorrectAnswerCount((x) => x + 1);
     else setIncorrectAnswerCount((x) => x + 1);
-
-    setQuestionResults((prev) => [
-      ...prev,
-      {
-        question: currentProblem.question,
-        yourResponse: currentProblem.answers[selectedAnswer ?? 0]?.name,
-        correctResponse:
-          currentProblem.answers[currentProblem.correctAnswer].name,
-      },
-    ]);
   };
 
-  const onFinish = () => {
+  const saveProgressToFirebase = async (updatedProgress: number) => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, "usuarios", user.uid);
+      await updateDoc(userRef, {
+        [`lessonsCompleted_unit${unitNumber}`]: updatedProgress,
+      });
+    } catch (error) {
+      console.error("Error saving progress to Firebase:", error);
+    }
+  };
+
+  const onFinish = async () => {
     setSelectedAnswer(null);
     setCorrectAnswerShown(false);
-    setLessonProblemIndex((prev) => prev + 1);
-    endTime.current = Date.now();
+    setButtonsDisabled(false);
+
+    if (lessonProblemIndex < lessonProblems.length - 1) {
+      setLessonProblemIndex((prev) => prev + 1);
+    } else {
+      if (unitProgress === tileIndex) {
+        const updatedProgress = unitProgress + 1;
+        await saveProgressToFirebase(updatedProgress);
+        setUnitProgress(unitNumber, updatedProgress);
+      }
+    }
   };
 
+  if (lessonProblemIndex >= lessonProblems.length) {
+    const formatTime = (timeMs: number): string => {
+      const seconds = Math.floor(timeMs / 1000) % 60;
+      const minutes = Math.floor(timeMs / 1000 / 60) % 60;
+      return [minutes, seconds]
+        .map((x) => x.toString().padStart(2, "0"))
+        .join(":");
+    };
 
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+        <h1 className="text-3xl font-bold text-yellow-500">Lesson Complete!</h1>
+        <div className="flex gap-4">
+          <div className="rounded-xl bg-yellow-400 px-4 py-2 text-center text-white">
+            <div>Total XP</div>
+            <div className="text-xl">{correctAnswerCount}</div>
+          </div>
+          <div className="rounded-xl bg-blue-400 px-4 py-2 text-center text-white">
+            <div>Time</div>
+            <div className="text-xl">
+              {formatTime(endTime.current - startTime.current)}
+            </div>
+          </div>
+          <div className="rounded-xl bg-green-400 px-4 py-2 text-center text-white">
+            <div>Accuracy</div>
+            <div className="text-xl">
+              {Math.round(
+                (correctAnswerCount /
+                  (correctAnswerCount + incorrectAnswerCount)) *
+                  100,
+              )}
+              %
+            </div>
+          </div>
+        </div>
+        <a
+          href="/learn"
+          className="rounded-2xl border-b-4 border-green-600 bg-green-500 px-4 py-2 text-white hover:brightness-105"
+        >
+          Continue
+        </a>
+      </div>
+    );
+  }
 
   if (!currentProblem) {
     return (
@@ -117,8 +197,6 @@ const Lesson: NextPage = () => {
       </div>
     );
   }
-  
-  
 
   if (correctAnswerCount >= totalCorrectAnswersNeeded && !correctAnswerShown) {
     const formatTime = (timeMs: number): string => {
@@ -149,7 +227,7 @@ const Lesson: NextPage = () => {
               {Math.round(
                 (correctAnswerCount /
                   (correctAnswerCount + incorrectAnswerCount)) *
-                100,
+                  100,
               )}
               %
             </div>
@@ -206,14 +284,16 @@ const Lesson: NextPage = () => {
       </main>
 
       <footer className="flex flex-col gap-2">
-        <button
-          className="rounded-2xl border-2 border-b-4 border-gray-200 p-3 text-gray-400 hover:border-gray-300 hover:bg-gray-100"
-          onClick={() => setCorrectAnswerShown(true)}
-        >
-          Skip
-        </button>
+        {!buttonsDisabled && (
+          <button
+            className="rounded-2xl border-2 border-b-4 border-gray-200 p-3 text-gray-400 hover:border-gray-300 hover:bg-gray-100"
+            onClick={() => setCorrectAnswerShown(true)}
+          >
+            Skip
+          </button>
+        )}
 
-        {selectedAnswer === null ? (
+        {!buttonsDisabled && selectedAnswer === null ? (
           <button
             disabled
             className="rounded-2xl bg-gray-200 p-3 text-gray-400"
@@ -221,24 +301,34 @@ const Lesson: NextPage = () => {
             Check
           </button>
         ) : (
-          <button
-            onClick={onCheckAnswer}
-            className="rounded-2xl border-b-4 border-green-600 bg-green-500 p-3 font-bold text-white"
-          >
-            Check
-          </button>
+          !buttonsDisabled && (
+            <button
+              onClick={onCheckAnswer}
+              className="rounded-2xl border-b-4 border-green-600 bg-green-500 p-3 font-bold text-white"
+            >
+              Check
+            </button>
+          )
         )}
 
         {correctAnswerShown && (
           <div
-            className={`rounded-xl p-4 text-center font-bold ${isAnswerCorrect ? "bg-green-100 text-green-800" : "bg-rose-100 text-rose-600"}`}
+            className={`rounded-xl p-4 text-center font-bold ${
+              isAnswerCorrect
+                ? "bg-green-100 text-green-800"
+                : "bg-rose-100 text-rose-600"
+            }`}
           >
             {isAnswerCorrect
               ? "Good job!"
               : `Correct answer: ${currentProblem.answers[currentProblem.correctAnswer].name}`}
             <button
               onClick={onFinish}
-              className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${isAnswerCorrect ? "border-green-600 bg-green-500" : "border-rose-600 bg-rose-500"}`}
+              className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${
+                isAnswerCorrect
+                  ? "border-green-600 bg-green-500"
+                  : "border-rose-600 bg-rose-500"
+              }`}
             >
               Continue
             </button>

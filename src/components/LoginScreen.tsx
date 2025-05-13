@@ -4,7 +4,10 @@ import type { ComponentProps } from "react";
 import React, { useEffect, useRef, useState } from "react";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import { useRouter } from "next/router";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "~/firebaseConfig";
 
@@ -49,7 +52,7 @@ export const LoginScreen = ({
   const [ageTooltipShown, setAgeTooltipShown] = useState(false);
 
   useEffect(() => {
-    setError(""); // limpiar errores al cambiar vista
+    setError(""); // Limpiar errores al cambiar vista
   }, [loginScreenState]);
 
   const handleAuth = async () => {
@@ -67,7 +70,8 @@ export const LoginScreen = ({
       // Si no existe el documento, lo creamos al registrarse
       if (!docSnap.exists() && loginScreenState === "SIGNUP") {
         const name =
-          nameInputRef.current?.value.trim() || "Usuario" + Math.random().toString().slice(2);
+          nameInputRef.current?.value.trim() ||
+          "Usuario" + Math.random().toString().slice(2);
         await setDoc(userRef, {
           nombre_usuario: name,
           email: user.email,
@@ -92,14 +96,14 @@ export const LoginScreen = ({
       setLoggedIn(true);
       void router.push("/profile");
     } catch (err: any) {
-      setError("❌ " + (err.message || "Error inesperado"));
+      setError("❌ " + (err.message || "Unexpected error"));
     }
   };
 
   return (
     <article
       className={[
-        "fixed inset-0 z-30 flex flex-col p-7 transition duration-300 bg-[#235390]",
+        "fixed inset-0 z-30 flex flex-col bg-[#235390] p-7 transition duration-300",
         loginScreenState === "HIDDEN"
           ? "pointer-events-none opacity-0"
           : "opacity-100",
@@ -189,9 +193,7 @@ export const LoginScreen = ({
           >
             {loginScreenState === "LOGIN" ? "Log in" : "Create account"}
           </button>
-          {error && (
-            <p className="text-center text-red-200 text-sm">{error}</p>
-          )}
+          {error && <p className="text-center text-sm text-red-200">{error}</p>}
           <div className="flex items-center gap-2">
             <div className="h-[2px] grow bg-gray-300"></div>
             <span className="font-bold uppercase text-gray-400">or</span>

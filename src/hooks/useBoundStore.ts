@@ -33,7 +33,12 @@ export type BoundState = GoalXpSlice &
   SoundSettingsSlice &
   StreakSlice &
   UserSlice &
-  XpSlice;
+  XpSlice & {
+    setLessonsCompleted: (value: number) => void; // Nueva función para actualizar lessonsCompleted
+    unitProgress: Record<number, number>; // unitNumber -> progreso
+    setUnitProgress: (unit: number, value: number) => void;
+    increaseUnitProgress: (unit: number, increment?: number) => void;
+  };
 
 //  Tipo para definir un slice dentro de BoundState
 export type BoundStateCreator<SliceState> = StateCreator<
@@ -43,14 +48,35 @@ export type BoundStateCreator<SliceState> = StateCreator<
   SliceState
 >;
 
-//  Crea el store combinando todos los slices
-export const useBoundStore = create<BoundState>((...args) => ({
-  ...createGoalXpSlice(...args),
-  ...createLanguageSlice(...args),
-  ...createLessonSlice(...args),
-  ...createLingotSlice(...args),
-  ...createSoundSettingsSlice(...args),
-  ...createStreakSlice(...args),
-  ...createUserSlice(...args),
-  ...createXpSlice(...args),
+export const useBoundStore = create<BoundState>((set, get, api) => ({
+  ...createGoalXpSlice(set, get, api),
+  ...createLanguageSlice(set, get, api),
+  ...createLessonSlice(set, get, api),
+  ...createLingotSlice(set, get, api),
+  ...createSoundSettingsSlice(set, get, api),
+  ...createStreakSlice(set, get, api),
+  ...createUserSlice(set, get, api),
+  ...createXpSlice(set, get, api),
+  setLessonsCompleted: (value: number) => {
+    set({ lessonsCompleted: value });
+  },
+  increaseLessonsCompleted: (increment = 1) => {
+    set((state: BoundState) => ({
+      lessonsCompleted: state.lessonsCompleted + increment,
+    }));
+  },
+  unitProgress: {},
+  setUnitProgress: (unit, value) => {
+    set((state) => ({
+      unitProgress: { ...state.unitProgress, [unit]: value },
+    }));
+  },
+  increaseUnitProgress: (unit, increment = 1) => {
+    set((state) => ({
+      unitProgress: {
+        ...state.unitProgress,
+        [unit]: (state.unitProgress[unit] || 0) + increment,
+      },
+    }));
+  },
 }));

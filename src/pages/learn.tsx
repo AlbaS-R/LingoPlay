@@ -11,6 +11,7 @@ import {
   GoldenDumbbellSvg,
   GoldenTreasureSvg,
   GoldenTrophySvg,
+  GuidebookSvg,
   LessonCompletionSvg0,
   LessonCompletionSvg1,
   LessonCompletionSvg2,
@@ -34,22 +35,16 @@ import { LoginScreen, useLoginScreen } from "~/components/LoginScreen";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import type { Tile, TileType, Unit } from "~/utils/units";
 import { units } from "~/utils/units";
+import { useAuth } from "~/context/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 type TileStatus = "LOCKED" | "ACTIVE" | "COMPLETE";
 
-const tileStatus = (tile: Tile, lessonsCompleted: number): TileStatus => {
-  const lessonsPerTile = 4;
-  const tilesCompleted = Math.floor(lessonsCompleted / lessonsPerTile);
-  const tiles = units.flatMap((unit) => unit.tiles);
-  const tileIndex = tiles.findIndex((t) => t === tile);
-
-  if (tileIndex < tilesCompleted) {
-    return "COMPLETE";
-  }
-  if (tileIndex > tilesCompleted) {
-    return "LOCKED";
-  }
-  return "ACTIVE";
+const tileStatus = (tileIndex: number, unitProgress: number): TileStatus => {
+  if (unitProgress > tileIndex) return "COMPLETE";
+  if (unitProgress === tileIndex) return "ACTIVE";
+  return "LOCKED";
 };
 
 const TileIcon = ({
@@ -108,6 +103,8 @@ const TileIcon = ({
       ) : (
         <LockedTrophySvg />
       );
+    default:
+      return <span />; // fallback to avoid undefined return
   }
 };
 
@@ -201,6 +198,7 @@ const TileTooltip = ({
   description,
   status,
   closeTooltip,
+  unitName,
 }: {
   selectedTile: number | null;
   index: number;
@@ -209,6 +207,7 @@ const TileTooltip = ({
   description: string;
   status: TileStatus;
   closeTooltip: () => void;
+  unitName: string;
 }) => {
   const tileTooltipRef = useRef<HTMLDivElement | null>(null);
 
@@ -294,7 +293,7 @@ const TileTooltip = ({
           </button>
         ) : (
           <Link
-            href="/lesson"
+            href={unitName === "Jocs de veu" ? "/voice-lesson" : "/lesson"}
             className="flex w-full items-center justify-center rounded-xl border-b-4 border-yellow-200 bg-white p-3 uppercase text-yellow-400"
           >
             Practice +5 XP
@@ -305,7 +304,13 @@ const TileTooltip = ({
   );
 };
 
-const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
+const UnitSection = ({
+  unit,
+  unitProgress,
+}: {
+  unit: Unit;
+  unitProgress: number;
+}): JSX.Element => {
   const router = useRouter();
 
   const [selectedTile, setSelectedTile] = useState<null | number>(null);
@@ -319,15 +324,56 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
   const closeTooltip = useCallback(() => setSelectedTile(null), []);
 
   const lessonsCompleted = useBoundStore((x) => x.lessonsCompleted);
+
   const increaseLessonsCompleted = useBoundStore(
     (x) => x.increaseLessonsCompleted,
   );
   const increaseLingots = useBoundStore((x) => x.increaseLingots);
 
+  const handleTileCompletion = (tile: Tile) => {
+    if (tile.type !== "treasure") {
+      increaseLessonsCompleted(0);
+    }
+  };
+
+  const handleTileClick = (tile: Tile, index: number) => {
+    const status = tileStatus(index, unitProgress);
+
+    if (tile.type === "fast-forward" && status === "LOCKED") {
+      void router.push(`/lesson?fast-forward=${unit.unitNumber}`);
+      return;
+    }
+
+    // Unit 2: todas las tiles excepto "treasure" -> memory game
+    if (
+      unit.unitNumber === 2 &&
+      tile.type !== "treasure" &&
+      (status === "ACTIVE" || status === "COMPLETE")
+    ) {
+      const gameId = `ej${index + 1}`;
+      void router.push(`/memory-game?gameId=${gameId}`);
+      return;
+    }
+
+    // Unit 3: todas las tiles excepto "treasure" -> voice lesson
+    if (
+      unit.unitNumber === 3 &&
+      tile.type !== "treasure" &&
+      (status === "ACTIVE" || status === "COMPLETE")
+    ) {
+      void router.push(`/voice-lesson`);
+      return;
+    }
+
+    if (status === "ACTIVE" || status === "COMPLETE") {
+      void router.push(`/lesson?tileIndex=${index}&unit=${unit.unitNumber}`);
+    }
+  };
+
   return (
     <>
       <UnitHeader
-        unitName={unit.unitName}
+        unitName={unit.unitName.toString()}
         unitNumber={unit.unitNumber}
         description={unit.description}
         backgroundColor={unit.backgroundColor}
@@ -335,7 +381,8 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
       />
       <div className="relative mb-8 mt-[67px] flex max-w-2xl flex-col items-center gap-4">
         {unit.tiles.map((tile, i): JSX.Element => {
-          const status = tileStatus(tile, lessonsCompleted);
+          const status = tileStatus(i, unitProgress);
+
           return (
             <Fragment key={i}>
               {(() => {
@@ -375,7 +422,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                           <HoverLabel text="Start" textColor={unit.textColor} />
                         ) : null}
                         <LessonCompletionSvg
-                          lessonsCompleted={lessonsCompleted}
+                          lessonsCompleted={unitProgress}
                           status={status}
                         />
                         <button
@@ -387,18 +434,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                               defaultColors: `${unit.borderColor} ${unit.backgroundColor}`,
                             }),
                           ].join(" ")}
-                          onClick={() => {
-                            if (
-                              tile.type === "fast-forward" &&
-                              status === "LOCKED"
-                            ) {
-                              void router.push(
-                                `/lesson?fast-forward=${unit.unitNumber}`,
-                              );
-                              return;
-                            }
-                            setSelectedTile(i);
-                          }}
+                          onClick={() => handleTileClick(tile, i)}
                         >
                           <TileIcon tileType={tile.type} status={status} />
                           <span className="sr-only">Show lesson</span>
@@ -418,8 +454,8 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                         ].join(" ")}
                         onClick={() => {
                           if (status === "ACTIVE") {
-                            increaseLessonsCompleted(4);
-                            increaseLingots(1);
+                            increaseLessonsCompleted(1);
+                            increaseLingots(3);
                           }
                         }}
                         role="button"
@@ -445,19 +481,22 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                     case "book":
                     case "dumbbell":
                     case "star":
-                      return tile.description;
+                      return tile.description ?? "";
                     case "fast-forward":
                       return status === "LOCKED"
                         ? "Jump here?"
-                        : tile.description;
+                        : (tile.description ?? "");
                     case "trophy":
                       return `Unit ${unit.unitNumber} review`;
                     case "treasure":
+                      return "";
+                    default:
                       return "";
                   }
                 })()}
                 status={status}
                 closeTooltip={closeTooltip}
+                unitName={unit.unitName.toString()}
               />
             </Fragment>
           );
@@ -488,6 +527,31 @@ const getTopBarColors = (
 };
 
 const Learn: NextPage = () => {
+  const { user, loading } = useAuth();
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
+  const unitProgress = useBoundStore((x) => x.unitProgress);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (loading) return;
+      if (!user) return;
+      try {
+        const userRef = doc(db, "usuarios", user.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          // Cargar progreso de todas las unidades
+          units.forEach((unit) => {
+            const progress =
+              data[`lessonsCompleted_unit${unit.unitNumber}`] ?? 0;
+            setUnitProgress(unit.unitNumber, progress);
+          });
+        }
+      } catch {}
+    };
+    fetchProgress();
+  }, [user, loading, setUnitProgress]);
+
   const { loginScreenState, setLoginScreenState } = useLoginScreen();
 
   const [scrollY, setScrollY] = useState(0);
@@ -511,7 +575,11 @@ const Learn: NextPage = () => {
       <div className="flex justify-center gap-3 pt-14 sm:p-6 sm:pt-10 md:ml-24 lg:ml-64 lg:gap-12">
         <div className="flex max-w-2xl grow flex-col">
           {units.map((unit) => (
-            <UnitSection unit={unit} key={unit.unitNumber} />
+            <UnitSection
+              unit={unit}
+              key={unit.unitNumber}
+              unitProgress={unitProgress[unit.unitNumber] || 0}
+            />
           ))}
           <div className="sticky bottom-28 left-0 right-0 flex items-end justify-between">
             {scrollY > 100 && (
@@ -606,7 +674,8 @@ const UnitHeader = ({
   backgroundColor,
   borderColor,
 }: {
-  unitName : String,
+  unitName: string;
+
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
@@ -624,7 +693,19 @@ const UnitHeader = ({
           <h2 className="text-2xl font-bold">{unitName}</h2>
           <p className="text-lg">{description}</p>
         </div>
-      
+
+        <Link
+          href={`https://duolingo.com/guidebook/${language.code}/${unitNumber}`}
+          className={[
+            "flex items-center gap-3 rounded-2xl border-2 border-b-4 p-3 transition hover:text-gray-100",
+            borderColor,
+          ].join(" ")}
+        >
+          <GuidebookSvg />
+          <span className="sr-only font-bold uppercase lg:not-sr-only">
+            Guidebook
+          </span>
+        </Link>
       </header>
     </article>
   );
