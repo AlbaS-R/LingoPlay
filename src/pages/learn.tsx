@@ -344,14 +344,24 @@ const UnitSection = ({
       return;
     }
 
-    // Si estamos en la Unit 2, las tiles tipo "book" llevan al memory game
+    // Unit 2: todas las tiles excepto "treasure" -> memory game
     if (
       unit.unitNumber === 2 &&
-      tile.type === "book" &&
+      tile.type !== "treasure" &&
       (status === "ACTIVE" || status === "COMPLETE")
     ) {
       const gameId = `ej${index + 1}`;
       void router.push(`/memory-game?gameId=${gameId}`);
+      return;
+    }
+
+    // Unit 3: todas las tiles excepto "treasure" -> voice lesson
+    if (
+      unit.unitNumber === 3 &&
+      tile.type !== "treasure" &&
+      (status === "ACTIVE" || status === "COMPLETE")
+    ) {
+      void router.push(`/voice-lesson`);
       return;
     }
 
@@ -363,7 +373,7 @@ const UnitSection = ({
   return (
     <>
       <UnitHeader
-        unitName={unit.unitName}
+        unitName={unit.unitName.toString()}
         unitNumber={unit.unitNumber}
         description={unit.description}
         backgroundColor={unit.backgroundColor}
@@ -486,7 +496,7 @@ const UnitSection = ({
                 })()}
                 status={status}
                 closeTooltip={closeTooltip}
-                unitName={unit.unitName}
+                unitName={unit.unitName.toString()}
               />
             </Fragment>
           );
@@ -664,10 +674,7 @@ const UnitHeader = ({
   backgroundColor,
   borderColor,
 }: {
-
-
-
-  unitName : string,
+  unitName: string;
 
   unitNumber: number;
   description: string;
@@ -687,7 +694,6 @@ const UnitHeader = ({
           <p className="text-lg">{description}</p>
         </div>
 
-
         <Link
           href={`https://duolingo.com/guidebook/${language.code}/${unitNumber}`}
           className={[
@@ -700,7 +706,6 @@ const UnitHeader = ({
             Guidebook
           </span>
         </Link>
-
       </header>
     </article>
   );

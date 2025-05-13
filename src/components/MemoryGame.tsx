@@ -120,6 +120,16 @@ export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
 
   return (
     <div>
+      {/* Botón de salir (cruz) arriba a la derecha */}
+      <div className="mb-2 flex justify-end">
+        <button
+          className="text-2xl font-bold text-gray-400 hover:text-gray-600"
+          aria-label="Salir"
+          onClick={() => (window.location.href = "/learn")}
+        >
+          ✖
+        </button>
+      </div>
       <h2 className="mb-4 text-xl font-bold">Memory Game</h2>
       {/* Elimina el temporizador aquí */}
       {/* <div className="mb-4 text-center font-bold text-blue-600">
