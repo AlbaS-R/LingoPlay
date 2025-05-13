@@ -202,6 +202,7 @@ const TileTooltip = ({
   description,
   status,
   closeTooltip,
+  unitName,
 }: {
   selectedTile: number | null;
   index: number;
@@ -210,6 +211,7 @@ const TileTooltip = ({
   description: string;
   status: TileStatus;
   closeTooltip: () => void;
+  unitName: string;
 }) => {
   const tileTooltipRef = useRef<HTMLDivElement | null>(null);
 
@@ -459,6 +461,7 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                 })()}
                 status={status}
                 closeTooltip={closeTooltip}
+                unitName={unit.unitName}
               />
             </Fragment>
           );
