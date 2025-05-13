@@ -102,6 +102,8 @@ const TileIcon = ({
       ) : (
         <LockedTrophySvg />
       );
+    default:
+      return <span />; // fallback to avoid undefined return
   }
 };
 
@@ -339,6 +341,17 @@ const UnitSection = ({
       return;
     }
 
+    // Si estamos en la Unit 2, las tiles tipo "book" llevan al memory game
+    if (
+      unit.unitNumber === 2 &&
+      tile.type === "book" &&
+      (status === "ACTIVE" || status === "COMPLETE")
+    ) {
+      const gameId = `ej${index + 1}`;
+      void router.push(`/memory-game?gameId=${gameId}`);
+      return;
+    }
+
     if (status === "ACTIVE" || status === "COMPLETE") {
       void router.push(`/lesson?tileIndex=${index}&unit=${unit.unitNumber}`);
     }
@@ -455,14 +468,16 @@ const UnitSection = ({
                     case "book":
                     case "dumbbell":
                     case "star":
-                      return tile.description;
+                      return tile.description ?? "";
                     case "fast-forward":
                       return status === "LOCKED"
                         ? "Jump here?"
-                        : tile.description;
+                        : (tile.description ?? "");
                     case "trophy":
                       return `Unit ${unit.unitNumber} review`;
                     case "treasure":
+                      return "";
+                    default:
                       return "";
                   }
                 })()}
