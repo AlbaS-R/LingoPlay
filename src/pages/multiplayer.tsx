@@ -35,6 +35,9 @@ import { LoginScreen, useLoginScreen } from "~/components/LoginScreen";
 import { useBoundStore } from "~/hooks/useBoundStore";
 import type { Tile, TileType, Unit } from "~/utils/units";
 import { units } from "~/utils/units";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+import { MemoryGame } from "../components/MemoryGame";
 
 type TileStatus = "LOCKED" | "ACTIVE" | "COMPLETE";
 
@@ -109,6 +112,9 @@ const TileIcon = ({
       ) : (
         <LockedTrophySvg />
       );
+    default:
+      // fallback to a simple empty span if tileType is not recognized
+      return <span />;
   }
 };
 
@@ -441,22 +447,26 @@ const UnitSection = ({ unit }: { unit: Unit }): JSX.Element => {
                 index={i}
                 unitNumber={unit.unitNumber}
                 tilesLength={unit.tiles.length}
-                description={(() => {
-                  switch (tile.type) {
-                    case "book":
-                    case "dumbbell":
-                    case "star":
-                      return tile.description;
-                    case "fast-forward":
-                      return status === "LOCKED"
-                        ? "Jump here?"
-                        : tile.description;
-                    case "trophy":
-                      return `Unit ${unit.unitNumber} review`;
-                    case "treasure":
-                      return "";
-                  }
-                })()}
+                description={
+                  (() => {
+                    switch (tile.type) {
+                      case "book":
+                      case "dumbbell":
+                      case "star":
+                        return tile.description ?? "";
+                      case "fast-forward":
+                        return status === "LOCKED"
+                          ? "Jump here?"
+                          : (tile.description ?? "");
+                      case "trophy":
+                        return `Unit ${unit.unitNumber} review`;
+                      case "treasure":
+                        return "";
+                      default:
+                        return "";
+                    }
+                  })() as string
+                }
                 status={status}
                 closeTooltip={closeTooltip}
               />
@@ -540,8 +550,6 @@ const Learn: NextPage = () => {
   );
 };
 
-export default Learn;
-
 const LessonCompletionSvg = ({
   lessonsCompleted,
   status,
@@ -607,7 +615,7 @@ const UnitHeader = ({
   backgroundColor,
   borderColor,
 }: {
-  unitName : String,
+  unitName: String;
   unitNumber: number;
   description: string;
   backgroundColor: `bg-${string}`;
@@ -641,3 +649,798 @@ const UnitHeader = ({
     </article>
   );
 };
+
+type Problem = {
+  question: string;
+  answers: { name: string }[];
+  correctAnswer: number;
+};
+
+type PlayerStats = {
+  correct: number;
+  time: number;
+  memoryPairs: number;
+  memoryTime: number;
+};
+
+const NUM_ROUNDS_LESSON = 5;
+const NUM_ROUNDS_MEMORY = 1;
+const NUM_PLAYERS = 2;
+
+const getRandomInt = (max: number) => Math.floor(Math.random() * max);
+
+const Multiplayer: NextPage = () => {
+  // --- Nuevo: modo de juego ---
+  const [mode, setMode] = useState<"lesson" | "memory">("lesson");
+  const [modeSelected, setModeSelected] = useState(false);
+
+  // --- Para modo lecciones ---
+  const [problemsP1, setProblemsP1] = useState<Problem[]>([]);
+  const [problemsP2, setProblemsP2] = useState<Problem[]>([]);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [playerStats, setPlayerStats] = useState<PlayerStats[]>(
+    Array(NUM_PLAYERS)
+      .fill(0)
+      .map(() => ({ correct: 0, time: 0, memoryPairs: 0, memoryTime: 0 })),
+  );
+  const [gameOver, setGameOver] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+
+  // --- Para modo memory game ---
+  const [memoryGameId, setMemoryGameId] = useState<string>(""); // Solo un juego
+  const [memoryPlayer, setMemoryPlayer] = useState(0);
+  const [memoryStats, setMemoryStats] = useState<PlayerStats[]>(
+    Array(NUM_PLAYERS)
+      .fill(0)
+      .map(() => ({ correct: 0, time: 0, memoryPairs: 0, memoryTime: 0 })),
+  );
+  const [memoryGameOver, setMemoryGameOver] = useState(false);
+  const [memoryGameKey, setMemoryGameKey] = useState(0); // Para forzar rerender
+
+  // --- Lecciones: cargar ejercicios distintos para cada jugador ---
+  useEffect(() => {
+    if (!modeSelected || mode !== "lesson") return;
+    const fetchProblems = async () => {
+      const indicesP1 = Array(NUM_ROUNDS_LESSON)
+        .fill(0)
+        .map(() => getRandomInt(5));
+      const indicesP2 = Array(NUM_ROUNDS_LESSON)
+        .fill(0)
+        .map(() => getRandomInt(5));
+      const loadedP1: Problem[] = [];
+      const loadedP2: Problem[] = [];
+      for (let i = 0; i < NUM_ROUNDS_LESSON; i++) {
+        // Player 1
+        {
+          const idx = indicesP1[i];
+          if (typeof idx === "undefined") continue;
+          const exerciseId = `ej${idx + 1}`;
+          const docRef = doc(db, "ejerciciosES", exerciseId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const {
+              preguntas,
+              respuestas_correctas,
+              opciones1,
+              opciones2,
+              opciones3,
+              opciones4,
+              opciones5,
+            } = data;
+            const qIdx = getRandomInt(preguntas.length);
+            loadedP1.push({
+              question: preguntas[qIdx],
+              answers: (
+                [opciones1, opciones2, opciones3, opciones4, opciones5][
+                  qIdx
+                ] as string[]
+              ).map((opt) => ({ name: opt })),
+              correctAnswer: (
+                [opciones1, opciones2, opciones3, opciones4, opciones5][
+                  qIdx
+                ] as string[]
+              ).indexOf(respuestas_correctas[qIdx]),
+            });
+          }
+        }
+        // Player 2
+        {
+          const idx = indicesP2[i];
+          if (typeof idx === "undefined") continue;
+          const exerciseId = `ej${idx + 1}`;
+          const docRef = doc(db, "ejerciciosES", exerciseId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const {
+              preguntas,
+              respuestas_correctas,
+              opciones1,
+              opciones2,
+              opciones3,
+              opciones4,
+              opciones5,
+            } = data;
+            const qIdx = getRandomInt(preguntas.length);
+            loadedP2.push({
+              question: preguntas[qIdx],
+              answers: (
+                [opciones1, opciones2, opciones3, opciones4, opciones5][
+                  qIdx
+                ] as string[]
+              ).map((opt) => ({ name: opt })),
+              correctAnswer: (
+                [opciones1, opciones2, opciones3, opciones4, opciones5][
+                  qIdx
+                ] as string[]
+              ).indexOf(respuestas_correctas[qIdx]),
+            });
+          }
+        }
+      }
+      setProblemsP1(loadedP1);
+      setProblemsP2(loadedP2);
+    };
+    fetchProblems();
+  }, [modeSelected, mode]);
+
+  // --- Memory game: elegir un solo juego aleatorio ---
+  useEffect(() => {
+    if (!modeSelected || mode !== "memory") return;
+    const id = `ej${getRandomInt(5) + 1}`;
+    setMemoryGameId(id);
+    setMemoryPlayer(0);
+    setMemoryStats(
+      Array(NUM_PLAYERS)
+        .fill(0)
+        .map(() => ({ correct: 0, time: 0, memoryPairs: 0, memoryTime: 0 })),
+    );
+    setMemoryGameOver(false);
+    setMemoryGameKey((k) => k + 1);
+    setWaiting(false);
+  }, [modeSelected, mode]);
+
+  // --- Lecciones: control de tiempo por jugador ---
+  const roundStartTime = useRef(Date.now());
+
+  useEffect(() => {
+    if (!modeSelected || mode !== "lesson") return;
+    if (currentRound < NUM_ROUNDS_LESSON) {
+      roundStartTime.current = Date.now();
+    }
+  }, [currentRound, currentPlayer, mode, modeSelected]);
+
+  // --- Lecciones: lógica de respuesta ---
+  const currentProblem =
+    currentPlayer === 0 ? problemsP1[currentRound] : problemsP2[currentRound];
+
+  const handleAnswer = (idx: number) => {
+    setSelectedAnswer(idx);
+    setShowResult(true);
+    if (!currentProblem) return;
+    const isCorrect = idx === currentProblem.correctAnswer;
+    setTimeout(() => {
+      setShowResult(false);
+      setSelectedAnswer(null);
+
+      setPlayerStats((prev) => {
+        const stats = [...prev];
+        if (stats[currentPlayer]) {
+          if (isCorrect) stats[currentPlayer].correct += 1;
+          stats[currentPlayer].time += Date.now() - roundStartTime.current;
+        }
+        return stats;
+      });
+
+      // Espera 1 segundo antes de cambiar de turno
+      setWaiting(true);
+      setTimeout(() => {
+        setWaiting(false);
+        if (currentPlayer < NUM_PLAYERS - 1) {
+          setCurrentPlayer((p) => p + 1);
+        } else {
+          if (currentRound < NUM_ROUNDS_LESSON - 1) {
+            setCurrentRound((r) => r + 1);
+            setCurrentPlayer(0);
+          } else {
+            setGameOver(true);
+          }
+        }
+      }, 1000);
+    }, 1200);
+  };
+
+  // --- Memory game: lógica de turnos y puntuación ---
+  // --- Componente Multiplayer modificado ---
+  // Busca la función handleMemoryGameFinish y reemplázala con esta versión:
+
+  const handleMemoryGameFinish = (
+    pairs: number,
+    time: number,
+    playerPairs: number[],
+  ) => {
+    setMemoryStats((prev) => {
+      const stats = [...prev];
+      // Guardamos las estadísticas del jugador actual
+      const prevStats = stats[memoryPlayer] || {
+        correct: 0,
+        time: 0,
+        memoryPairs: 0,
+        memoryTime: 0,
+      };
+      stats[memoryPlayer] = {
+        correct: prevStats.correct ?? 0,
+        time: prevStats.time ?? 0,
+        memoryPairs: pairs,
+        memoryTime: time,
+      };
+
+      // También guardamos las estadísticas del otro jugador
+      // basadas en los datos del juego actual
+      const otherPlayer = memoryPlayer === 0 ? 1 : 0;
+      const otherPlayerPairs = playerPairs ? playerPairs[otherPlayer] || 0 : 0;
+      stats[otherPlayer] = {
+        correct: stats[otherPlayer]?.correct ?? 0,
+        time: stats[otherPlayer]?.time ?? 0,
+        memoryPairs: otherPlayerPairs,
+        memoryTime: time, // Mismo tiempo para ambos jugadores
+      };
+
+      return stats;
+    });
+
+    // Terminamos el juego inmediatamente sin pasar al siguiente jugador
+    setMemoryGameOver(true);
+  };
+
+  // --- Pantalla de selección de modo ---
+  if (!modeSelected) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
+        <h1 className="text-3xl font-bold text-blue-700">Multiplayer Mode</h1>
+        <div className="flex gap-8">
+          <button
+            className="rounded-2xl border-b-4 border-green-600 bg-green-500 px-8 py-4 text-xl font-bold text-white hover:brightness-105"
+            onClick={() => {
+              setMode("lesson");
+              setModeSelected(true);
+            }}
+          >
+            Lesson Mode
+          </button>
+          <button
+            className="rounded-2xl border-b-4 border-blue-600 bg-blue-500 px-8 py-4 text-xl font-bold text-white hover:brightness-105"
+            onClick={() => {
+              setMode("memory");
+              setModeSelected(true);
+            }}
+          >
+            Memory Game Mode
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Modo lecciones ---
+  if (mode === "lesson") {
+    if (problemsP1.length === 0 || problemsP2.length === 0) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-xl font-bold">Loading multiplayer game...</div>
+        </div>
+      );
+    }
+
+    if (gameOver) {
+      const winner =
+        (playerStats[0]?.correct ?? 0) > (playerStats[1]?.correct ?? 0)
+          ? 0
+          : (playerStats[1]?.correct ?? 0) > (playerStats[0]?.correct ?? 0)
+            ? 1
+            : (playerStats[0]?.time ?? 0) < (playerStats[1]?.time ?? 0)
+              ? 0
+              : (playerStats[1]?.time ?? 0) < (playerStats[0]?.time ?? 0)
+                ? 1
+                : -1;
+
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+          <h1 className="text-3xl font-bold text-blue-600">Game Over!</h1>
+          <div className="flex gap-8">
+            {[0, 1].map((p) => (
+              <div
+                key={p}
+                className={`rounded-xl border-2 px-8 py-4 text-center font-bold ${
+                  winner === p
+                    ? p === 0
+                      ? "border-blue-600 bg-blue-100 text-blue-700"
+                      : "border-orange-500 bg-orange-100 text-orange-700"
+                    : "border-gray-300 bg-gray-100 text-gray-500"
+                }`}
+              >
+                <div className="text-lg">Player {p + 1}</div>
+                <div>Correct: {playerStats[p]?.correct}</div>
+                <div>
+                  Time: {Math.floor((playerStats[p]?.time ?? 0) / 1000)}s
+                </div>
+                {winner === p && (
+                  <div className="mt-2 text-2xl">🏆 Winner!</div>
+                )}
+              </div>
+            ))}
+          </div>
+          {winner === -1 && (
+            <div className="text-xl font-bold text-yellow-600">Empate</div>
+          )}
+          <button
+            className="mt-6 rounded-2xl border-b-4 border-blue-500 bg-blue-400 px-6 py-3 font-bold text-white hover:brightness-105"
+            onClick={() => {
+              setModeSelected(false);
+              setGameOver(false);
+              setCurrentRound(0);
+              setCurrentPlayer(0);
+              setPlayerStats(
+                Array(NUM_PLAYERS)
+                  .fill(0)
+                  .map(() => ({
+                    correct: 0,
+                    time: 0,
+                    memoryPairs: 0,
+                    memoryTime: 0,
+                  })),
+              );
+            }}
+          >
+            Play Again
+          </button>
+        </div>
+      );
+    }
+
+    if (!currentProblem) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-xl font-bold">Loading...</div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        {/* TopBar y LeftBar: la casa debe ir a /learn */}
+        <TopBar />
+        <LeftBar selectedTab="Profile" />
+        <BottomBar selectedTab={undefined} />
+        <div className="flex min-h-screen flex-col items-center justify-center p-4">
+          <h1 className="mb-4 text-2xl font-bold text-blue-700">
+            Multiplayer Mode - Lesson
+          </h1>
+          <div className="mb-2 text-lg font-bold">
+            Round {currentRound + 1} / {NUM_ROUNDS_LESSON}
+          </div>
+          <div className="mb-2 text-lg font-bold">
+            <span
+              className={
+                currentPlayer === 0 ? "text-blue-700" : "text-orange-600"
+              }
+            >
+              Player {currentPlayer + 1}
+            </span>
+            's turn
+          </div>
+          {waiting ? (
+            <div className="mb-6 text-xl text-gray-400">Get ready...</div>
+          ) : (
+            <>
+              <div className="mb-6 text-xl">{currentProblem.question}</div>
+              <div className="mb-6 grid grid-cols-2 gap-4">
+                {currentProblem.answers.map((answer, idx) => (
+                  <button
+                    key={idx}
+                    className={`rounded-xl border-2 border-b-4 px-6 py-3 text-lg font-bold ${
+                      selectedAnswer === idx
+                        ? idx === currentProblem.correctAnswer
+                          ? "border-green-500 bg-green-100 text-green-700"
+                          : "border-red-500 bg-red-100 text-red-700"
+                        : "border-gray-200 bg-white hover:bg-gray-100"
+                    }`}
+                    disabled={selectedAnswer !== null}
+                    onClick={() => handleAnswer(idx)}
+                  >
+                    {answer.name}
+                  </button>
+                ))}
+              </div>
+              {showResult && (
+                <div
+                  className={`mb-4 text-xl font-bold ${
+                    selectedAnswer === currentProblem.correctAnswer
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {selectedAnswer === currentProblem.correctAnswer
+                    ? "Correct!"
+                    : `Incorrect!`}
+                </div>
+              )}
+            </>
+          )}
+          <div className="mt-8 flex gap-8">
+            {[0, 1].map((p) => (
+              <div
+                key={p}
+                className={`rounded-xl border-2 px-6 py-2 text-center font-bold ${
+                  p === 0
+                    ? "border-blue-500 bg-blue-100 text-blue-700"
+                    : "border-orange-500 bg-orange-100 text-orange-700"
+                }`}
+              >
+                <div>Player {p + 1}</div>
+                <div>Correct: {playerStats[p]?.correct}</div>
+                <div>
+                  Time: {Math.floor((playerStats[p]?.time ?? 0) / 1000)}s
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Modo memory game ---
+  if (mode === "memory") {
+    if (memoryGameOver) {
+      const winner =
+        (memoryStats[0]?.memoryPairs ?? 0) > (memoryStats[1]?.memoryPairs ?? 0)
+          ? 0
+          : (memoryStats[1]?.memoryPairs ?? 0) >
+              (memoryStats[0]?.memoryPairs ?? 0)
+            ? 1
+            : (memoryStats[0]?.memoryTime ?? 0) <
+                (memoryStats[1]?.memoryTime ?? 0)
+              ? 0
+              : (memoryStats[1]?.memoryTime ?? 0) <
+                  (memoryStats[0]?.memoryTime ?? 0)
+                ? 1
+                : -1;
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+          <h1 className="text-3xl font-bold text-blue-600">Game Over!</h1>
+          <div className="flex gap-8">
+            {[0, 1].map((p) => (
+              <div
+                key={p}
+                className={`rounded-xl border-2 px-8 py-4 text-center font-bold ${
+                  winner === p
+                    ? p === 0
+                      ? "border-blue-600 bg-blue-100 text-blue-700"
+                      : "border-orange-500 bg-orange-100 text-orange-700"
+                    : "border-gray-300 bg-gray-100 text-gray-500"
+                }`}
+              >
+                <div className="text-lg">Player {p + 1}</div>
+                <div>Pairs: {memoryStats[p]?.memoryPairs}</div>
+                <div>
+                  Time: {Math.floor((memoryStats[p]?.memoryTime ?? 0) / 1000)}s
+                </div>
+                {winner === p && (
+                  <div className="mt-2 text-2xl">🏆 Winner!</div>
+                )}
+              </div>
+            ))}
+          </div>
+          {winner === -1 && (
+            <div className="text-xl font-bold text-yellow-600">Empate</div>
+          )}
+          <button
+            className="mt-6 rounded-2xl border-b-4 border-blue-500 bg-blue-400 px-6 py-3 font-bold text-white hover:brightness-105"
+            onClick={() => {
+              setModeSelected(false);
+            }}
+          >
+            Play Again
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <TopBar />
+        <LeftBar selectedTab="Profile" />
+        <BottomBar selectedTab={undefined} />
+        <div className="flex min-h-screen flex-col items-center justify-center p-4">
+          <h1 className="mb-4 text-2xl font-bold text-blue-700">
+            Multiplayer Mode - Memory Game
+          </h1>
+          <div className="mb-2 text-lg font-bold">
+            {waiting
+              ? `Get ready for Player ${memoryPlayer + 1}...`
+              : `Player ${memoryPlayer + 1}'s turn`}
+          </div>
+          {waiting ? (
+            <div className="mb-6 text-xl text-gray-400">Get ready...</div>
+          ) : (
+            <MemoryGameMultiplayer
+              key={memoryGameKey}
+              gameId={memoryGameId}
+              onFinish={(pairs, time, playerPairs) =>
+                handleMemoryGameFinish(pairs, time, playerPairs)
+              }
+            />
+          )}
+          <div className="mt-8 flex gap-8">
+            {[0, 1].map((p) => (
+              <div
+                key={p}
+                className={`rounded-xl border-2 px-6 py-2 text-center font-bold ${
+                  p === 0
+                    ? "border-blue-500 bg-blue-100 text-blue-700"
+                    : "border-orange-500 bg-orange-100 text-orange-700"
+                }`}
+              >
+                <div>Player {p + 1}</div>
+                <div>Pairs: {memoryStats[p]?.memoryPairs}</div>
+                <div>
+                  Time: {Math.floor((memoryStats[p]?.memoryTime ?? 0) / 1000)}s
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+// --- Componente MemoryGame para multiplayer ---
+const MemoryGameMultiplayer = ({
+  gameId,
+  onFinish,
+}: {
+  gameId: string;
+  onFinish: (pairs: number, time: number, playerPairs: number[]) => void;
+}) => {
+  // Usa la misma lógica que el componente MemoryGame
+  const [cards, setCards] = useState<
+    {
+      id: number;
+      value: string;
+      matched: boolean;
+      flipped: boolean;
+      matchedBy?: number;
+    }[]
+  >([]);
+  const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
+  const [matchedCount, setMatchedCount] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState(0); // 0 o 1
+  const [playerPairs, setPlayerPairs] = useState([0, 0]);
+  const [playerTurns, setPlayerTurns] = useState([0, 0]);
+  const [lastAttemptCorrect, setLastAttemptCorrect] = useState<boolean | null>(
+    null,
+  );
+  const [timerStarted, setTimerStarted] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+
+  // Inicia el temporizador solo cuando el primer movimiento ocurre
+  useEffect(() => {
+    if (timerStarted && startTime === null) {
+      setStartTime(Date.now());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timerStarted]);
+
+  useEffect(() => {
+    if (!timerStarted || startTime === null || completed) return;
+    // Usa setTimeout recursivo para evitar acumulación de intervalos y asegurar precisión
+    let timeout: NodeJS.Timeout;
+    const tick = () => {
+      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+      if (!completed) {
+        timeout = setTimeout(tick, 1000);
+      }
+    };
+    tick();
+    return () => clearTimeout(timeout);
+  }, [timerStarted, startTime, completed]);
+
+  useEffect(() => {
+    const fetchPairs = async () => {
+      const docRef = doc(db, "memoryGames", gameId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // data.pairs: string[] con formato "dog|perro"
+        const pairs: { id: number; front: string; back: string }[] = (
+          data.pairs as string[]
+        ).map((str, idx) => {
+          const [front = "", back = ""] = str.split("|");
+          return { id: idx + 1, front, back };
+        });
+        const allCards = pairs
+          .flatMap((pair) => [
+            {
+              id: pair.id,
+              value: pair.front,
+              matched: false,
+              flipped: false,
+              matchedBy: undefined,
+            },
+            {
+              id: pair.id,
+              value: pair.back,
+              matched: false,
+              flipped: false,
+              matchedBy: undefined,
+            },
+          ])
+          .sort(() => Math.random() - 0.5);
+        setCards(allCards);
+        setMatchedCount(0);
+        setFlippedIndices([]);
+        setCompleted(false);
+        setCurrentPlayer(0);
+        setPlayerPairs([0, 0]);
+        setPlayerTurns([0, 0]);
+        setLastAttemptCorrect(null);
+      }
+    };
+    if (gameId) {
+      fetchPairs();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
+
+  useEffect(() => {
+    if (cards.length && matchedCount === cards.length / 2) {
+      setCompleted(true);
+
+      const player1Pairs = playerPairs[0] || 0;
+      const player2Pairs = playerPairs[1] || 0;
+
+      setTimeout(() => {
+        onFinish(player1Pairs, elapsed, playerPairs);
+      }, 800);
+    }
+  }, [matchedCount, cards.length, completed, elapsed, onFinish, playerPairs]);
+
+  const handleFlip = (idx: number) => {
+    if (
+      !cards[idx] ||
+      cards[idx].flipped ||
+      cards[idx].matched ||
+      flippedIndices.length === 2 ||
+      completed
+    )
+      return;
+    if (!timerStarted) setTimerStarted(true);
+
+    const newFlipped = [...flippedIndices, idx];
+    const newCards = cards.map((card, i) =>
+      i === idx ? { ...card, flipped: true } : card,
+    );
+    setCards(newCards);
+    setFlippedIndices(newFlipped);
+
+    if (newFlipped.length === 2) {
+      const [i1, i2] = newFlipped;
+      setTimeout(() => {
+        if (
+          i1 !== undefined &&
+          i2 !== undefined &&
+          newCards[i1] &&
+          newCards[i2] &&
+          newCards[i1].id === newCards[i2].id &&
+          i1 !== i2
+        ) {
+          setCards((prev) =>
+            prev.map((card, i) =>
+              i === i1 || i === i2
+                ? { ...card, matched: true, matchedBy: currentPlayer }
+                : card,
+            ),
+          );
+          setMatchedCount((c) => c + 1);
+          setPlayerPairs((prev) => {
+            const arr = [...prev];
+            arr[currentPlayer] = (arr[currentPlayer] ?? 0) + 1;
+            return arr;
+          });
+          setPlayerTurns((prev) => {
+            const arr = [...prev];
+            arr[currentPlayer] = (arr[currentPlayer] ?? 0) + 1;
+            return arr;
+          });
+          setLastAttemptCorrect(true);
+          setFlippedIndices([]);
+        } else if (i1 !== undefined && i2 !== undefined) {
+          setCards((prev) =>
+            prev.map((card, i) =>
+              i === i1 || i === i2 ? { ...card, flipped: false } : card,
+            ),
+          );
+          setPlayerTurns((prev) => {
+            const arr = [...prev];
+            arr[currentPlayer] = (arr[currentPlayer] ?? 0) + 1;
+            return arr;
+          });
+          setLastAttemptCorrect(false);
+          setTimeout(() => {
+            setCurrentPlayer((p) => (p === 0 ? 1 : 0));
+            setFlippedIndices([]);
+          }, 400);
+        }
+      }, 800);
+    }
+  };
+
+  if (!cards.length)
+    return <div className="text-center text-lg">Loading memory game...</div>;
+
+  return (
+    <div>
+      <div className="mb-4 text-lg font-bold text-blue-700">Memory Game</div>
+      <div className="mb-2 text-gray-500">Time: {elapsed}s</div>
+      <div className="mb-2 text-lg font-bold">
+        <span
+          className={currentPlayer === 0 ? "text-blue-700" : "text-orange-600"}
+        >
+          Player {currentPlayer + 1}
+        </span>
+        's turn
+      </div>
+      <div className="mb-4 flex justify-center gap-8">
+        {[0, 1].map((p) => (
+          <div
+            key={p}
+            className={`rounded-xl border-2 px-6 py-2 text-center font-bold ${
+              p === 0
+                ? "border-blue-500 bg-blue-100 text-blue-700"
+                : "border-orange-500 bg-orange-100 text-orange-700"
+            }`}
+          >
+            <div>Player {p + 1}</div>
+            <div>Pairs: {playerPairs[p]}</div>
+            <div>Turns: {playerTurns[p]}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-4">
+        {cards.map((card, idx) => {
+          let bgColor = "bg-gray-200";
+          if (card.matched) {
+            bgColor = card.matchedBy === 1 ? "bg-orange-200" : "bg-blue-200";
+          } else if (card.flipped) {
+            bgColor = currentPlayer === 1 ? "bg-orange-200" : "bg-blue-200";
+          }
+          return (
+            <button
+              key={idx}
+              className={`flex h-20 w-28 items-center justify-center rounded border text-lg font-bold ${bgColor}`}
+              onClick={() => handleFlip(idx)}
+              disabled={card.flipped || card.matched || completed}
+            >
+              {card.flipped || card.matched ? card.value : "?"}
+            </button>
+          );
+        })}
+      </div>
+      {completed && (
+        <div className="mt-4 font-bold text-green-600">¡Completado!</div>
+      )}
+    </div>
+  );
+};
+
+export default Multiplayer;
