@@ -76,16 +76,26 @@ export const MemoryGame = ({
     if (cards.length && matchedCount === cards.length / 2) {
       setCompleted(true);
       if (timerRef.current) clearInterval(timerRef.current);
-      setTimeout(() => setShowStats(true), 600);
-      if (user && unitProgress === currentTileIndex) {
+      setTimeout(() => setShowStats(true), 600); // Pequeño delay para UX
+      // Guardar progreso y XP SIEMPRE que se complete el nivel
+      if (user) {
         const saveProgress = async () => {
           try {
             const userRef = doc(db, "usuarios", user.uid);
-            await updateDoc(userRef, {
-              [`lessonsCompleted_unit${unitNumber}`]: unitProgress + 1,
-            });
-            setUnitProgress(unitNumber, unitProgress + 1);
-          } catch (e) {}
+            const userSnap = await getDoc(userRef);
+            const currentXp = userSnap.exists() ? userSnap.data().xp || 0 : 0;
+            // Si es la primera vez, avanza progreso; si no, solo suma XP
+            const update: Record<string, any> = {
+              xp: currentXp + 10,
+            };
+            if (unitProgress === currentTileIndex) {
+              update[`lessonsCompleted_unit${unitNumber}`] = unitProgress + 1;
+              setUnitProgress(unitNumber, unitProgress + 1);
+            }
+            await updateDoc(userRef, update);
+          } catch (e) {
+            // Error silencioso
+          }
         };
         saveProgress();
       }

@@ -45,7 +45,8 @@ const Lesson: NextPage = () => {
       if (!user) return;
 
       // Selecciona la colección según la unidad (voz o normal)
-      const collectionName = unitNumber === 3 ? "ejerciciosVoz" : "ejerciciosES";
+      const collectionName =
+        unitNumber === 3 ? "ejerciciosVoz" : "ejerciciosES";
       const exerciseId = `ej${tileIndex + 1}`;
       const docRef = doc(db, collectionName, exerciseId);
       const docSnap = await getDoc(docRef);
@@ -114,13 +115,23 @@ const Lesson: NextPage = () => {
     else setIncorrectAnswerCount((x) => x + 1);
   };
 
-  const saveProgressToFirebase = async (updatedProgress: number) => {
+  const saveProgressToFirebase = async (
+    updatedProgress: number,
+    alwaysAddXp = false,
+  ) => {
     if (!user) return;
     try {
       const userRef = doc(db, "usuarios", user.uid);
-      await updateDoc(userRef, {
-        [`lessonsCompleted_unit${unitNumber}`]: updatedProgress,
-      });
+      const userSnap = await getDoc(userRef);
+      const currentXp = userSnap.exists() ? userSnap.data().xp || 0 : 0;
+      // Si alwaysAddXp es true, suma XP siempre; si no, solo cuando sube progreso
+      const update: Record<string, any> = {
+        xp: currentXp + 10,
+      };
+      if (!alwaysAddXp) {
+        update[`lessonsCompleted_unit${unitNumber}`] = updatedProgress;
+      }
+      await updateDoc(userRef, update);
     } catch (error) {
       console.error("Error saving progress to Firebase:", error);
     }
@@ -134,10 +145,13 @@ const Lesson: NextPage = () => {
     if (lessonProblemIndex < lessonProblems.length - 1) {
       setLessonProblemIndex((prev) => prev + 1);
     } else {
+      // Suma XP SIEMPRE, y solo sube progreso si es la primera vez
       if (unitProgress === tileIndex) {
         const updatedProgress = unitProgress + 1;
-        await saveProgressToFirebase(updatedProgress);
+        await saveProgressToFirebase(updatedProgress, false);
         setUnitProgress(unitNumber, updatedProgress);
+      } else {
+        await saveProgressToFirebase(unitProgress, true);
       }
     }
   };
