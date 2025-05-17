@@ -358,7 +358,7 @@ const UnitSection = ({
     // Unit 3: todas las tiles excepto "treasure" -> voice lesson
     if (
       unit.unitNumber === 3 &&
-      tile.type !== "trophy" &&
+      //tile.type !== "trophy" &&
       (status === "ACTIVE" || status === "COMPLETE")
     ) {
       const gameId = `ej${index + 1}`;
