@@ -26,7 +26,7 @@ import {
 import { db } from "../firebaseConfig"; 
 
 
-type ExerciseType = "ejerciciosES" | "ejerciciosVoz" | "memorygames";
+type ExerciseType = "ejerciciosES" | "ejerciciosVoz" | "memoryGames";
 
 
 interface BaseExercise {
@@ -152,7 +152,7 @@ const Downloads: NextPage = () => {
         let exerciseDataToSave: DownloadedExercise; // Para almacenar los datos que guardaremos
         const docId = `ej${exerciseNumber}`; // Los IDs de tus documentos en Firestore son "ej1", "ej2", etc.
 
-        if (exerciseType === "memorygames") {
+        if (exerciseType === "memoryGames") {
           // Lógica específica para la colección 'memorygames' que tiene una subcolección 'pairs'
           const mainDocRef = doc(db, exerciseType, docId);
           const mainDocSnap = await getDoc(mainDocRef);
@@ -300,7 +300,7 @@ const Downloads: NextPage = () => {
                   <MenuListComposition
                     label="Descarrega"
                     unitId={1}
-                    exerciseType="memorygames" // Especificamos el tipo de colección
+                    exerciseType="memoryGames" // Especificamos el tipo de colección
                   />
                 </div>
               </UnitHeader>
