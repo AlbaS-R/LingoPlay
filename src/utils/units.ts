@@ -56,10 +56,12 @@ export const units: readonly Unit[] = [
     textColor: "text-[#60A5FA]",
     borderColor: "border-[#4C7EDB]",
     tiles: [
-      { type: "book", description: "Voice Exercise 1" },
-      { type: "book", description: "Voice Exercise 2" },
-      { type: "book", description: "Voice Exercise 3" },
-      { type: "trophy", description: "Unit 3 review" },
-    ],
+    { type: "book", description: "Voice Exercise 1" },  
+    { type: "star", description: "Voice Exercise 2" },  
+    { type: "book", description: "Voice Exercise 3" },  
+    { type: "star", description: "Voice Exercise 4" },  
+    { type: "trophy", description: "Unit 3 review" },
+  ],
+
   },
 ];
