@@ -239,10 +239,11 @@ export const LoginScreen = ({
             <div className="h-[2px] grow bg-gray-300"></div>
           </div>
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-300 bg-white py-3 font-bold text-gray-700 transition hover:bg-gray-100 hover:brightness-90"
             onClick={handleGoogleLogin}
+            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-300 bg-white py-3 font-bold text-gray-700 transition hover:bg-gray-100 hover:brightness-90"
           >
-            <GoogleLogoSvg className="h-5 w-5" /> Google
+            <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
+            Continue with Google
           </button>
           <p className="text-center text-xs leading-5 text-gray-400">
             By signing in to LingoPlay, you agree to our{" "}
