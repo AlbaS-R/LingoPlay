@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "~/firebaseConfig";
+import { useBoundStore } from "~/hooks/useBoundStore";
 
 // Tipado del ejercicio
 type VoiceExercise = {
@@ -20,6 +21,11 @@ const VoiceLesson = () => {
   const [shouldSaveResult, setShouldSaveResult] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [wasCorrect, setWasCorrect] = useState(false);
+  const [showUnlockedMessage, setShowUnlockedMessage] = useState(false);
+
+  const unitProgress = useBoundStore((x) => x.unitProgress[3] || 0);
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
+  const increaseLessonsCompleted = useBoundStore((x) => x.increaseLessonsCompleted);
 
   const normalize = (text: string) =>
     text.toLowerCase().replace(/[^À-ſa-z0-9 ]/gi, "").trim();
@@ -85,7 +91,6 @@ const VoiceLesson = () => {
   };
 
   const nextExercise = () => {
-    if (!wasCorrect) return;
     setTranscript("");
     setFeedback("");
     setWasCorrect(false);
@@ -99,35 +104,93 @@ const VoiceLesson = () => {
   useEffect(() => {
     const guardarResultado = async () => {
       if (!shouldSaveResult) return;
+
       const uid = auth.currentUser?.uid;
       if (!uid) return;
+
       const total = exercises.length;
       const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(elapsed / 60).toString().padStart(2, "0");
       const seconds = (elapsed % 60).toString().padStart(2, "0");
+
       const userRef = doc(db, "usuarios", uid);
-      const resultado = {
-        leccionVoz: {
-          fecha: new Date().toISOString(),
-          totalXP: total,
-          aciertos: correctCount,
-          tiempo: `${minutes}:${seconds}`,
-          precision: accuracy
-        }
-      };
+
       try {
-        await setDoc(userRef, resultado, { merge: true });
-        console.log("✅ Resultado guardado.");
+        const userSnap = await getDoc(userRef);
+        let progresoAnterior = 0;
+        if (userSnap.exists()) {
+          progresoAnterior = userSnap.data().lessonsCompleted_unit3 || 0;
+        }
+
+        const nuevoProgreso = Math.max(progresoAnterior, progresoAnterior + 1);
+
+        await setDoc(userRef, {
+          lessonsCompleted_unit3: nuevoProgreso,
+          leccionVoz: {
+            fecha: new Date().toISOString(),
+            totalXP: total,
+            aciertos: correctCount,
+            tiempo: `${minutes}:${seconds}`,
+            precision: accuracy
+          }
+        }, { merge: true });
+
+        setUnitProgress(3, nuevoProgreso);
+        increaseLessonsCompleted(3);
+        setShowUnlockedMessage(true);
+        console.log("✅ Resultado guardado. Progreso:", nuevoProgreso);
       } catch (error) {
         console.error("❌ Error al guardar resultado:", error);
       }
     };
+
     guardarResultado();
   }, [shouldSaveResult]);
 
   if (exercises.length === 0) return <div className="p-6">Loading exercises...</div>;
-  if (!current) return <div className="p-6">Lesson complete! 🎉</div>;
+
+  if (!current) {
+    const total = exercises.length;
+    const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60).toString().padStart(2, "0");
+    const seconds = (elapsed % 60).toString().padStart(2, "0");
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center gap-6 bg-white px-4">
+        <h1 className="text-3xl font-bold text-yellow-500">Lesson Complete!</h1>
+
+        {showUnlockedMessage && (
+          <div className="bg-green-100 text-green-700 px-6 py-3 rounded-xl shadow text-lg font-semibold">
+            ✅ ¡Nuevo ejercicio desbloqueado!
+          </div>
+        )}
+
+        <div className="flex gap-6">
+          <div className="bg-yellow-400 text-white px-4 py-2 rounded-lg shadow">
+            <p className="text-sm">Total XP</p>
+            <p className="text-xl font-bold">{total}</p>
+          </div>
+          <div className="bg-blue-400 text-white px-4 py-2 rounded-lg shadow">
+            <p className="text-sm">Time</p>
+            <p className="text-xl font-bold">{minutes}:{seconds}</p>
+          </div>
+          <div className="bg-green-400 text-white px-4 py-2 rounded-lg shadow">
+            <p className="text-sm">Accuracy</p>
+            <p className="text-xl font-bold">{accuracy}%</p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => window.location.href = "/learn"}
+          className="mt-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-lg shadow"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start px-4 py-6 relative bg-white">
@@ -181,23 +244,27 @@ const VoiceLesson = () => {
 
       {feedback && (
         <div
-          className={`w-full mt-6 py-4 text-center ${
+          className={`w-full mt-6 px-4 py-4 rounded-xl font-bold text-center ${
             feedback.startsWith("✅")
-              ? "bg-green-100 border-t-4 border-green-500"
-              : "bg-red-100 border-t-4 border-red-500"
+              ? "bg-green-100 text-green-800"
+              : "bg-rose-100 text-rose-600"
           }`}
         >
-          <p className="text-lg font-semibold mb-2">
+          <p className="text-lg mb-3">
             {feedback.startsWith("✅") ? "Good job!" : feedback.replace("❌ ", "")}
           </p>
-          <button
-            onClick={nextExercise}
-            className={`px-8 py-2 text-white rounded-full text-lg shadow-md transition ${
-              feedback.startsWith("✅") ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
-            }`}
-          >
-            Continue
-          </button>
+          <div className="w-full">
+            <button
+              onClick={nextExercise}
+              className={`w-full rounded-2xl border-b-4 p-4 text-white text-lg font-bold transition shadow ${
+                feedback.startsWith("✅")
+                  ? "bg-green-500 border-green-600 hover:brightness-105"
+                  : "bg-red-500 border-red-600 hover:brightness-105"
+              }`}
+            >
+              Continue
+            </button>
+          </div>
         </div>
       )}
 
