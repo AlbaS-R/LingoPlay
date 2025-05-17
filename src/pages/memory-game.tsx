@@ -3,7 +3,7 @@ import { MemoryGame } from "../components/MemoryGame";
 
 const MemoryGamePage = () => {
   const router = useRouter();
-  const { gameId } = router.query;
+  const { gameId, tileIndex } = router.query;
 
   if (!gameId || typeof gameId !== "string") {
     return <div>Loading...</div>;
@@ -11,7 +11,7 @@ const MemoryGamePage = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <MemoryGame gameId={gameId} />
+      <MemoryGame gameId={gameId} tileIndex={Number(tileIndex) || 0} />
     </div>
   );
 };
