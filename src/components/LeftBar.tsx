@@ -141,7 +141,7 @@ export const LeftBar = ({ selectedTab }: { selectedTab?: Tab }) => {
                   </Link>
                   <Link
                     className="px-5 py-2 text-left uppercase hover:bg-gray-100"
-                    href="https://support.duolingo.com/hc/en-us"
+                    href="/help"
                   >
                     Help
                   </Link>
