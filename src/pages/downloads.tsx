@@ -11,29 +11,22 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { useState, useRef, useEffect, ReactNode, useCallback } from "react"; // Añadimos useCallback
+import { useState, useRef, useEffect, ReactNode, useCallback } from "react";
 import localforage from "localforage";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../firebaseConfig"; // Asegúrate de que esta ruta sea correcta para tu db de Firestore
-import { useRouter } from "next/router"; // Para navegar a la página del ejercicio
-import { TopBar } from "~/components/TopBar";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+import { useRouter } from "next/router";
+import { TopBar } from "~/components/TopBar"; // Assuming these imports are correct
 import { BottomBar } from "~/components/BottomBar";
 import { RightBar } from "~/components/RightBar";
 import { LeftBar } from "~/components/LeftBar";
 
-// --- Interfaces y Tipos (Repetimos para que el código sea autocontenido, pero mejor en un archivo 'types.ts') ---
-type ExerciseType = "ejerciciosES" | "ejerciciosVoz" | "memoryGames"; // Corregido 'memoryGames'
+type ExerciseType = "ejerciciosES" | "ejerciciosVoz" | "memoryGames";
 
 interface BaseExercise {
-  id: string; // ej1, ej2, etc.
+  id: string;
   type: ExerciseType;
-  // Añade aquí cualquier otra propiedad común a todos los ejercicios como 'title'
-  title?: string; // Opcional, pero útil para mostrar en la lista
+  title?: string;
 }
 
 interface StandardExercise extends BaseExercise {
@@ -48,16 +41,14 @@ interface StandardExercise extends BaseExercise {
 
 interface MemoryGame extends BaseExercise {
   pairs: Array<{
-    id: string; // ID del documento dentro de la subcolección 'pairs'
+    id: string;
     image?: string;
     text?: string;
-    // ... otras propiedades de una pareja
   }>;
 }
 
 type DownloadedExercise = StandardExercise | MemoryGame;
 
-// --- Componente UnitHeader (sin cambios, lo incluyo para la integridad) ---
 const UnitHeader = ({
   unitName,
   unitNumber,
@@ -92,24 +83,21 @@ const UnitHeader = ({
   );
 };
 
-// --- Componente Downloads Page ---
 const Downloads: NextPage = () => {
-  const router = useRouter(); // Inicializamos el router para la navegación
+  const router = useRouter();
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
     "success",
   );
-  // Nuevo estado para almacenar los ejercicios descargados
+
   const [downloadedExercises, setDownloadedExercises] = useState<DownloadedExercise[]>([]);
 
-  // Función para cargar todos los ejercicios descargados
   const loadDownloadedExercises = useCallback(async () => {
     const exercises: DownloadedExercise[] = [];
     try {
       await localforage.iterate((value, key, iterationNumber) => {
-        // Asumimos que todas las claves de ejercicios descargados comienzan con el tipo de ejercicio
         if (key.startsWith("ejerciciosES-") || key.startsWith("ejerciciosVoz-") || key.startsWith("memoryGames-")) {
           exercises.push(value as DownloadedExercise);
         }
@@ -121,17 +109,16 @@ const Downloads: NextPage = () => {
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
-  }, []); // Dependencias vacías, solo se crea una vez
+  }, []);
 
-  // Configura localforage y carga los ejercicios al montar el componente
   useEffect(() => {
     localforage.config({
       name: "offlineExercisesDB",
       storeName: "exercises",
       description: "Almacén para ejercicios offline",
     });
-    loadDownloadedExercises(); // Carga inicial
-  }, [loadDownloadedExercises]); // Dependencia de loadDownloadedExercises
+    loadDownloadedExercises();
+  }, [loadDownloadedExercises]);
 
   const MenuListComposition = ({
     label,
@@ -172,7 +159,7 @@ const Downloads: NextPage = () => {
         let exerciseDataToSave: DownloadedExercise;
         const docId = `ej${exerciseNumber}`;
 
-        if (exerciseType === "memoryGames") { // Corregido el nombre de la colección
+        if (exerciseType === "memoryGames") {
           const mainDocRef = doc(db, exerciseType, docId);
           const mainDocSnap = await getDoc(mainDocRef);
 
@@ -192,7 +179,7 @@ const Downloads: NextPage = () => {
           exerciseDataToSave = {
             id: docId,
             type: exerciseType,
-            title: mainDocSnap.data()?.title || `Memory Game ${exerciseNumber}`, // Título para mostrar
+            title: mainDocSnap.data()?.title || `Memory Game ${exerciseNumber}`,
             ...mainDocSnap.data(),
             pairs: pairsData,
           } as MemoryGame;
@@ -208,7 +195,7 @@ const Downloads: NextPage = () => {
           exerciseDataToSave = {
             id: docId,
             type: exerciseType,
-            title: exerciseSnap.data()?.title || `Exercise ${exerciseNumber}`, // Título para mostrar
+            title: exerciseSnap.data()?.title || `Exercise ${exerciseNumber}`,
             ...exerciseSnap.data(),
           } as StandardExercise;
         }
@@ -222,7 +209,7 @@ const Downloads: NextPage = () => {
           `Ejercicio "${docId}" de "${exerciseType}" descargado.`,
         );
         setSnackbarSeverity("success");
-        loadDownloadedExercises(); // Vuelve a cargar los ejercicios para actualizar la UI
+        loadDownloadedExercises();
       } catch (error: any) {
         console.error("Error al descargar o guardar el ejercicio:", error);
         setSnackbarMessage(`Error al descargar el ejercicio: ${error.message}`);
@@ -287,22 +274,18 @@ const Downloads: NextPage = () => {
     setSnackbarOpen(false);
   };
 
-  // Función para iniciar un ejercicio (navega a una página de ejercicio)
   const handleStartExercise = (exercise: DownloadedExercise) => {
-    // Aquí deberás definir la ruta a tu página de ejercicio.
-    // Puedes pasar los IDs del ejercicio como parámetros de la URL.
-    // Ejemplo: /exercises/memoryGames/ej1
-    router.push(`/exercise/${exercise.type}/${exercise.id}`);
+    // Navigate to the lesson page, passing the exercise type and ID as query parameters
+    router.push(`/lesson?type=${exercise.type}&id=${exercise.id}`);
   };
 
-  // Función para eliminar un ejercicio descargado
   const handleDeleteDownloadedExercise = async (exercise: DownloadedExercise) => {
     try {
       await localforage.removeItem(`${exercise.type}-${exercise.id}`);
       setSnackbarMessage(`Ejercicio "${exercise.id}" de "${exercise.type}" eliminado.`);
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
-      loadDownloadedExercises(); // Vuelve a cargar para actualizar la lista
+      loadDownloadedExercises();
     } catch (error: any) {
       console.error("Error al eliminar ejercicio:", error);
       setSnackbarMessage(`Error al eliminar el ejercicio: ${error.message}`);
@@ -311,12 +294,10 @@ const Downloads: NextPage = () => {
     }
   };
 
-
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex flex-col md:flex-row flex-1">
-        {/* Asegúrate de que LeftBar esté importado correctamente */}
-        <LeftBar /> 
+        <LeftBar />
 
         <main className="flex justify-center gap-3 pt-14 sm:p-6 sm:pt-10 md:ml-24 lg:ml-64 lg:gap-12 flex-1">
           <div className="flex max-w-4xl w-full flex-col">
@@ -329,7 +310,6 @@ const Downloads: NextPage = () => {
             </Link>
 
             <div className="flex flex-col space-y-6">
-              {/* Jocs de memòria (Memory Games) */}
               <UnitHeader
                 unitName="Jocs de memòria"
                 unitNumber={1}
@@ -344,7 +324,7 @@ const Downloads: NextPage = () => {
                     exerciseType="memoryGames"
                   />
                 </div>
-                {/* Mostrar ejercicios descargados para esta unidad/tipo */}
+
                 <div className="mt-4 px-6 text-black">
                   <h3 className="text-lg font-semibold text-white mb-2">Ejercicios Descargados:</h3>
                   {downloadedExercises
@@ -363,7 +343,7 @@ const Downloads: NextPage = () => {
                           >
                             Iniciar
                           </Button>
-                           <Button
+                          <Button
                             variant="outlined"
                             size="small"
                             onClick={() => handleDeleteDownloadedExercise(ex)}
@@ -380,7 +360,7 @@ const Downloads: NextPage = () => {
                 </div>
               </UnitHeader>
 
-              {/* Jocs de lògica (Ejercicios normales) */}
+
               <UnitHeader
                 unitName="Jocs de lògica"
                 unitNumber={2}
@@ -395,7 +375,7 @@ const Downloads: NextPage = () => {
                     exerciseType="ejerciciosES"
                   />
                 </div>
-                 <div className="mt-4 px-6 text-black">
+                <div className="mt-4 px-6 text-black">
                   <h3 className="text-lg font-semibold text-white mb-2">Ejercicios Descargados:</h3>
                   {downloadedExercises
                     .filter(
@@ -413,7 +393,7 @@ const Downloads: NextPage = () => {
                           >
                             Iniciar
                           </Button>
-                           <Button
+                          <Button
                             variant="outlined"
                             size="small"
                             onClick={() => handleDeleteDownloadedExercise(ex)}
@@ -445,7 +425,7 @@ const Downloads: NextPage = () => {
                     exerciseType="ejerciciosVoz"
                   />
                 </div>
-                 <div className="mt-4 px-6 text-black">
+                <div className="mt-4 px-6 text-black">
                   <h3 className="lg font-semibold text-white mb-2">Ejercicios Descargados:</h3>
                   {downloadedExercises
                     .filter(
@@ -463,7 +443,7 @@ const Downloads: NextPage = () => {
                           >
                             Iniciar
                           </Button>
-                           <Button
+                          <Button
                             variant="outlined"
                             size="small"
                             onClick={() => handleDeleteDownloadedExercise(ex)}
@@ -480,7 +460,7 @@ const Downloads: NextPage = () => {
                 </div>
               </UnitHeader>
 
-              {/* Puzzles visuals (Asumiendo ejerciciosES) */}
+
               <UnitHeader
                 unitName="Puzzles visuals"
                 unitNumber={4}
@@ -492,7 +472,7 @@ const Downloads: NextPage = () => {
                   <MenuListComposition
                     label="Descarrega"
                     unitId={4}
-                    exerciseType="ejerciciosES" // Asumo que es ejerciciosES
+                    exerciseType="ejerciciosES"
                   />
                 </div>
                 <div className="mt-4 px-6 text-black">
@@ -513,7 +493,7 @@ const Downloads: NextPage = () => {
                           >
                             Iniciar
                           </Button>
-                           <Button
+                          <Button
                             variant="outlined"
                             size="small"
                             onClick={() => handleDeleteDownloadedExercise(ex)}
@@ -533,9 +513,9 @@ const Downloads: NextPage = () => {
           </div>
         </main>
 
-        
-         <RightBar /> 
-         <BottomBar /> 
+
+        <RightBar />
+        <BottomBar />
       </div>
 
       <Snackbar
