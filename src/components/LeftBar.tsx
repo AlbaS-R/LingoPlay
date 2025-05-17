@@ -100,30 +100,11 @@ export const LeftBar = ({ selectedTab }: { selectedTab?: Tab }) => {
               <LeftBarMoreMenuSvg className="h-6 w-6" />
               <span className="hidden text-sm lg:inline">More</span>
               <div
-                className={`absolute left-[88px] top-0 z-50 min-w-[300px] rounded-2xl border-2 border-gray-300 bg-white text-left text-gray-400 shadow-xl ${
+                className={`absolute left-[88px] top-12 z-50 min-w-[300px] rounded-2xl border-2 border-gray-300 bg-white text-left text-gray-400 shadow-xl ${
                   moreMenuShown ? "" : "hidden"
                 }`}
               >
-                <div className="flex flex-col py-2">
-                  <Link
-                    className="flex items-center gap-4 px-5 py-2 text-left uppercase hover:bg-gray-100"
-                    href="https://schools.duolingo.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <GlobeIconSvg className="h-10 w-10" />
-                    Schools
-                  </Link>
-                  <Link
-                    className="flex items-center gap-4 px-5 py-2 text-left uppercase hover:bg-gray-100"
-                    href="https://podcast.duolingo.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <PodcastIconSvg className="h-10 w-10" />
-                    Podcast
-                  </Link>
-                </div>
+                
                 <div className="flex flex-col border-t-2 border-gray-300 py-2">
                   {!loggedIn && (
                     <button
