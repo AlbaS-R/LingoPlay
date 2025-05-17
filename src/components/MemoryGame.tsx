@@ -1,22 +1,40 @@
 import { useEffect, useState, useRef } from "react";
 import { db } from "../firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuth } from "~/context/AuthContext";
+import { useBoundStore } from "~/hooks/useBoundStore";
 
 type Pair = { id: number; front: string; back: string };
 type Card = { id: number; value: string; matched: boolean; flipped: boolean };
 
-export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
+export const MemoryGame = ({
+  gameId = "ej1",
+  tileIndex = 0,
+}: {
+  gameId?: string;
+  tileIndex?: number;
+}) => {
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedCount, setMatchedCount] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [showStats, setShowStats] = useState(false);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
+  const { user } = useAuth();
+  const unitNumber = 2;
+  const unitProgress = useBoundStore((x) => x.unitProgress[unitNumber] || 0);
+  const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
+
+  const currentEj = gameId || `ej${tileIndex + 1}`;
+  const currentTileIndex = tileIndex;
+
   useEffect(() => {
     const fetchPairs = async () => {
-      const docRef = doc(db, "memoryGames", gameId);
+      const docRef = doc(db, "memoryGames", currentEj);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -33,14 +51,15 @@ export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
         setCards(allCards);
         setCompleted(false);
         setElapsed(0);
+        setShowStats(false);
+        setMatchedCount(0);
+        setFlippedIndices([]);
         startTimeRef.current = Date.now();
       }
     };
     fetchPairs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId]);
+  }, [currentEj]);
 
-  // Temporizador
   useEffect(() => {
     if (completed) return;
     timerRef.current = setInterval(() => {
@@ -57,8 +76,39 @@ export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
     if (cards.length && matchedCount === cards.length / 2) {
       setCompleted(true);
       if (timerRef.current) clearInterval(timerRef.current);
+      setTimeout(() => setShowStats(true), 600); // Pequeño delay para UX
+      // Guardar progreso y XP SIEMPRE que se complete el nivel
+      if (user) {
+        const saveProgress = async () => {
+          try {
+            const userRef = doc(db, "usuarios", user.uid);
+            const userSnap = await getDoc(userRef);
+            const currentXp = userSnap.exists() ? userSnap.data().xp || 0 : 0;
+            // Si es la primera vez, avanza progreso; si no, solo suma XP
+            const update: Record<string, any> = {
+              xp: currentXp + 10,
+            };
+            if (unitProgress === currentTileIndex) {
+              update[`lessonsCompleted_unit${unitNumber}`] = unitProgress + 1;
+              setUnitProgress(unitNumber, unitProgress + 1);
+            }
+            await updateDoc(userRef, update);
+          } catch (e) {
+            // Error silencioso
+          }
+        };
+        saveProgress();
+      }
     }
-  }, [matchedCount, cards.length]);
+  }, [
+    matchedCount,
+    cards.length,
+    completed,
+    user,
+    unitProgress,
+    setUnitProgress,
+    currentTileIndex,
+  ]);
 
   const handleFlip = (idx: number) => {
     if (
@@ -109,7 +159,6 @@ export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
 
   if (!cards.length) return <div>Loading...</div>;
 
-  // Formatea el tiempo en mm:ss
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60)
       .toString()
@@ -118,9 +167,26 @@ export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
     return `${min}:${sec}`;
   };
 
+  const handleRestart = () => {
+    setShowStats(false);
+    setCompleted(false);
+    setElapsed(0);
+    setMatchedCount(0);
+    setFlippedIndices([]);
+    setCards((prev) =>
+      prev
+        .map((card) => ({
+          ...card,
+          matched: false,
+          flipped: false,
+        }))
+        .sort(() => Math.random() - 0.5),
+    );
+    startTimeRef.current = Date.now();
+  };
+
   return (
     <div>
-      {/* Botón de salir (cruz) arriba a la derecha */}
       <div className="mb-2 flex justify-end">
         <button
           className="text-2xl font-bold text-gray-400 hover:text-gray-600"
@@ -131,36 +197,44 @@ export const MemoryGame = ({ gameId = "ej1" }: { gameId?: string }) => {
         </button>
       </div>
       <h2 className="mb-4 text-xl font-bold">Memory Game</h2>
-      {/* Elimina el temporizador aquí */}
-      {/* <div className="mb-4 text-center font-bold text-blue-600">
-        Tiempo: {formatTime(elapsed)}
-      </div> */}
-      <div className="grid grid-cols-4 gap-4">
-        {cards.map((card, idx) => (
-          <button
-            key={idx}
-            className={`flex h-20 w-28 items-center justify-center rounded border text-lg font-bold ${
-              card.flipped || card.matched ? "bg-blue-200" : "bg-gray-200"
-            }`}
-            onClick={() => handleFlip(idx)}
-            disabled={card.flipped || card.matched || completed}
-          >
-            {card.flipped || card.matched ? card.value : "?"}
-          </button>
-        ))}
-      </div>
-      {completed && (
+
+      {!showStats && (
+        <div className="grid grid-cols-4 gap-4">
+          {cards.map((card, idx) => (
+            <button
+              key={idx}
+              className={`flex h-20 w-28 items-center justify-center rounded border text-lg font-bold ${
+                card.flipped || card.matched ? "bg-blue-200" : "bg-gray-200"
+              }`}
+              onClick={() => handleFlip(idx)}
+              disabled={card.flipped || card.matched || completed}
+            >
+              {card.flipped || card.matched ? card.value : "?"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showStats && (
         <div className="mt-6 flex flex-col items-center gap-4">
           <div className="font-bold text-green-600">¡Completado!</div>
           <div className="text-lg font-bold text-blue-700">
             Tiempo total: {formatTime(elapsed)}
           </div>
-          <button
-            className="rounded-2xl border-b-4 border-blue-500 bg-blue-400 px-6 py-3 font-bold text-white hover:brightness-105"
-            onClick={() => (window.location.href = "/learn")}
-          >
-            Volver a ejercicios
-          </button>
+          <div className="flex gap-4">
+            <button
+              className="rounded-2xl border-b-4 border-blue-500 bg-blue-400 px-6 py-3 font-bold text-white hover:brightness-105"
+              onClick={handleRestart}
+            >
+              Repetir nivel
+            </button>
+            <button
+              className="rounded-2xl border-b-4 border-green-600 bg-green-500 px-6 py-3 font-bold text-white hover:brightness-105"
+              onClick={() => (window.location.href = "/learn")}
+            >
+              Volver a ejercicios
+            </button>
+          </div>
         </div>
       )}
     </div>
