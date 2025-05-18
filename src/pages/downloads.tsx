@@ -21,6 +21,7 @@ import { BottomBar } from "~/components/BottomBar";
 import { RightBar } from "~/components/RightBar";
 import { LeftBar } from "~/components/LeftBar";
 
+
 type ExerciseType = "ejerciciosES" | "ejerciciosVoz" | "memoryGames";
 
 interface BaseExercise {
@@ -28,6 +29,7 @@ interface BaseExercise {
   type: ExerciseType;
   title?: string;
 }
+
 
 interface StandardExercise extends BaseExercise {
   opciones1?: string[];
@@ -192,12 +194,14 @@ const Downloads: NextPage = () => {
               `El ejercicio "${docId}" de "${exerciseType}" no existe en Firestore.`,
             );
           }
+
           exerciseDataToSave = {
             id: docId,
             type: exerciseType,
             title: exerciseSnap.data()?.title || `Exercise ${exerciseNumber}`,
             ...exerciseSnap.data(),
           } as StandardExercise;
+
         }
 
         await localforage.setItem(
@@ -275,11 +279,11 @@ const Downloads: NextPage = () => {
   };
 
   const handleStartExercise = (exercise: DownloadedExercise) => {
-    // Navigate to the lesson page, passing the exercise type and ID as query parameters
-    router.push(`/lesson?type=${exercise.type}&id=${exercise.id}`);
+    router.push(`/LessonOfline?type=${exercise.type}&id=${exercise.id}`);
   };
 
   const handleDeleteDownloadedExercise = async (exercise: DownloadedExercise) => {
+
     try {
       await localforage.removeItem(`${exercise.type}-${exercise.id}`);
       setSnackbarMessage(`Ejercicio "${exercise.id}" de "${exercise.type}" eliminado.`);
@@ -305,15 +309,12 @@ const Downloads: NextPage = () => {
             <p className="mb-4">
               Aquí puedes descargar ejercicios para realizarlos sin conexión.
             </p>
-            <Link href="/" className="text-blue-500 underline mb-6 block">
-              Volver a inicio
-            </Link>
 
             <div className="flex flex-col space-y-6">
               <UnitHeader
-                unitName="Jocs de memòria"
+                unitName="Memory games"
                 unitNumber={1}
-                description="Ejercicios para entrenar tu memoria."
+                description="Learn while exercising the brain!"
                 backgroundColor="bg-blue-200"
                 borderColor="border-blue-300"
               >
@@ -360,11 +361,10 @@ const Downloads: NextPage = () => {
                 </div>
               </UnitHeader>
 
-
               <UnitHeader
-                unitName="Jocs de lògica"
+                unitName="Basic exercises"
                 unitNumber={2}
-                description="Desafía tu mente con ejercicios de lógica."
+                description="Learn basic words."
                 backgroundColor="bg-blue-300"
                 borderColor="border-blue-400"
               >
@@ -410,20 +410,21 @@ const Downloads: NextPage = () => {
                 </div>
               </UnitHeader>
 
-              {/* Dictats auditivos (Ejercicios de voz) */}
               <UnitHeader
-                unitName="Dictats auditivos"
+                unitName="Voice recognition"
                 unitNumber={3}
-                description="Mejora tu comprensión auditiva con dictados."
+                description="Practice your pronunciation with voice exercises!"
                 backgroundColor="bg-blue-400"
                 borderColor="border-blue-600"
               >
+
                 <div className="flex justify-end mt-4 pr-6 space-x-4">
                   <MenuListComposition
                     label="Descarrega"
                     unitId={3}
                     exerciseType="ejerciciosVoz"
                   />
+
                 </div>
                 <div className="mt-4 px-6 text-black">
                   <h3 className="lg font-semibold text-white mb-2">Ejercicios Descargados:</h3>
@@ -459,60 +460,9 @@ const Downloads: NextPage = () => {
                   )}
                 </div>
               </UnitHeader>
-
-
-              <UnitHeader
-                unitName="Puzzles visuals"
-                unitNumber={4}
-                description="Entrena tu visión con puzzles desafiantes."
-                backgroundColor="bg-blue-500"
-                borderColor="border-blue-700"
-              >
-                <div className="flex justify-end mt-4 pr-6 space-x-4">
-                  <MenuListComposition
-                    label="Descarrega"
-                    unitId={4}
-                    exerciseType="ejerciciosES"
-                  />
-                </div>
-                <div className="mt-4 px-6 text-black">
-                  <h3 className="lg font-semibold text-white mb-2">Ejercicios Descargados:</h3>
-                  {downloadedExercises
-                    .filter(
-                      (ex) => ex.type === "ejerciciosES" && ex.id.includes("ej") // Filtrar por tipo y por patrón de ID si es necesario
-                    )
-                    .map((ex) => (
-                      <div key={ex.id} className="flex items-center justify-between bg-white p-3 rounded-md mb-2 shadow">
-                        <span className="font-medium text-gray-800">{ex.title || `Ejercicio ${ex.id}`}</span>
-                        <div>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => handleStartExercise(ex)}
-                            className="ml-2 text-blue-600 border-blue-600 hover:bg-blue-50"
-                          >
-                            Iniciar
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => handleDeleteDownloadedExercise(ex)}
-                            className="ml-2 text-red-600 border-red-600 hover:bg-red-50"
-                          >
-                            Eliminar
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  {downloadedExercises.filter((ex) => ex.type === "ejerciciosES" && ex.id.includes("ej")).length === 0 && (
-                    <p className="text-white text-sm">No hay puzzles visuales descargados.</p>
-                  )}
-                </div>
-              </UnitHeader>
             </div>
           </div>
         </main>
-
 
         <RightBar />
         <BottomBar />
@@ -535,5 +485,7 @@ const Downloads: NextPage = () => {
     </div>
   );
 };
+
+
 
 export default Downloads;
