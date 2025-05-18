@@ -16,7 +16,7 @@ import localforage from "localforage";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useRouter } from "next/router";
-import { TopBar } from "~/components/TopBar"; // Assuming these imports are correct
+import { TopBar } from "~/components/TopBar";
 import { BottomBar } from "~/components/BottomBar";
 import { RightBar } from "~/components/RightBar";
 import { LeftBar } from "~/components/LeftBar";
@@ -305,9 +305,9 @@ const Downloads: NextPage = () => {
 
         <main className="flex justify-center gap-3 pt-14 sm:p-6 sm:pt-10 md:ml-24 lg:ml-64 lg:gap-12 flex-1">
           <div className="flex max-w-4xl w-full flex-col">
-            <h1 className="text-2xl font-bold mb-2">Página de Descargas</h1>
+            <h1 className="text-2xl font-bold mb-2">Downloads Page</h1>
             <p className="mb-4">
-              Aquí puedes descargar ejercicios para realizarlos sin conexión.
+              Here you will be able to download your favorite exercises and play offline!!
             </p>
 
             <div className="flex flex-col space-y-6">
