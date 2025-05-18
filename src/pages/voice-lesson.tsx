@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
+import { collection, getDoc, getDocs, doc, setDoc } from "firebase/firestore";
 import { db, auth } from "~/firebaseConfig";
+import { useRouter } from "next/router";
 import { useBoundStore } from "~/hooks/useBoundStore";
 
 // Tipado del ejercicio
@@ -23,35 +24,45 @@ const VoiceLesson = () => {
   const [wasCorrect, setWasCorrect] = useState(false);
   const [showUnlockedMessage, setShowUnlockedMessage] = useState(false);
 
+  const router = useRouter();
+  const gameId = router.query.gameId as string;
+
   const unitProgress = useBoundStore((x) => x.unitProgress[3] || 0);
   const setUnitProgress = useBoundStore((x) => x.setUnitProgress);
   const increaseLessonsCompleted = useBoundStore((x) => x.increaseLessonsCompleted);
 
   const normalize = (text: string) =>
-    text.toLowerCase().replace(/[^À-ſa-z0-9 ]/gi, "").trim();
+    text.toLowerCase().replace(/[^\w\sÀ-ſ]/g, "").trim();
 
   useEffect(() => {
     const fetchExercises = async () => {
-      const querySnapshot = await getDocs(collection(db, "ejerciciosVoz"));
-      const data: VoiceExercise[] = [];
-      querySnapshot.forEach((doc) => {
-        const d = doc.data();
-        const preguntas = d.preguntas;
-        const respuestas = d.respuestaCorrecta;
+      if (!gameId) return;
+      try {
+        const docRef = doc(db, "ejerciciosVoz", gameId);
+        const snapshot = await getDoc(docRef);
+        const data = snapshot.data();
+        if (!data) return;
+        const preguntas = data?.preguntas;
+        const respuestas = data?.respuestaCorrecta;
+
         if (Array.isArray(preguntas) && Array.isArray(respuestas)) {
+          const ejercicios: VoiceExercise[] = [];
           for (let i = 0; i < preguntas.length; i++) {
-            data.push({
+            ejercicios.push({
               pregunta: preguntas[i],
               respuestaCorrecta: respuestas[i],
-              alternativas: d[`opciones${i + 1}`] || []
+              alternativas: data[`opciones${i + 1}`] || [],
             });
           }
+          setExercises(ejercicios);
         }
-      });
-      setExercises(data);
+      } catch (error) {
+        console.error("Error al cargar ejercicios:", error);
+      }
     };
+
     fetchExercises();
-  }, []);
+  }, [gameId]);
 
   const current = exercises[currentIndex];
 
@@ -103,7 +114,7 @@ const VoiceLesson = () => {
 
   useEffect(() => {
     const guardarResultado = async () => {
-      if (!shouldSaveResult) return;
+      if (!shouldSaveResult || !gameId) return;
 
       const uid = auth.currentUser?.uid;
       if (!uid) return;
@@ -123,17 +134,17 @@ const VoiceLesson = () => {
           progresoAnterior = userSnap.data().lessonsCompleted_unit3 || 0;
         }
 
-        const nuevoProgreso = Math.max(progresoAnterior, progresoAnterior + 1);
+        const nuevoProgreso = Math.max(progresoAnterior, Number(gameId.replace("ej", "")));
 
         await setDoc(userRef, {
-          lessonsCompleted_unit3: nuevoProgreso,
+          [`lessonsCompleted_unit3`]: nuevoProgreso,
           leccionVoz: {
             fecha: new Date().toISOString(),
             totalXP: total,
             aciertos: correctCount,
             tiempo: `${minutes}:${seconds}`,
-            precision: accuracy
-          }
+            precision: accuracy,
+          },
         }, { merge: true });
 
         setUnitProgress(3, nuevoProgreso);
@@ -148,7 +159,19 @@ const VoiceLesson = () => {
     guardarResultado();
   }, [shouldSaveResult]);
 
-  if (exercises.length === 0) return <div className="p-6">Loading exercises...</div>;
+  if (exercises.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-start px-4 py-6 bg-white relative">
+        <div className="w-full flex items-center justify-between mb-6 px-2">
+          <button
+            onClick={() => router.push("/learn")}
+            className="text-purple-600 hover:text-purple-800 text-2xl"
+          >❌</button>
+        </div>
+        <p className="text-lg text-gray-700">Loading exercises...</p>
+      </div>
+    );
+  }
 
   if (!current) {
     const total = exercises.length;
@@ -183,7 +206,7 @@ const VoiceLesson = () => {
         </div>
 
         <button
-          onClick={() => window.location.href = "/learn"}
+          onClick={() => router.push("/learn")}
           className="mt-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-lg shadow"
         >
           Continue
@@ -279,7 +302,7 @@ const VoiceLesson = () => {
                 className="px-4 py-2 rounded border text-gray-700 hover:bg-gray-100"
               >Stay</button>
               <button
-                onClick={() => window.location.href = "/learn"}
+                onClick={() => router.push("/learn")}
                 className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
               >Quit</button>
             </div>

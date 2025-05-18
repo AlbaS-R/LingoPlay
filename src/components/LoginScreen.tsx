@@ -7,13 +7,15 @@ import { useRouter } from "next/router";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "~/firebaseConfig";
 
 export const GoogleLogoSvg = (props: ComponentProps<"svg">) => (
   <svg viewBox="0 0 48 48" {...props}>
-    {/* (SVG Paths igual que antes...) */}
+    {/* (SVG Paths igual que abans...) */}
   </svg>
 );
 
@@ -52,7 +54,7 @@ export const LoginScreen = ({
   const [ageTooltipShown, setAgeTooltipShown] = useState(false);
 
   useEffect(() => {
-    setError(""); // Limpiar errores al cambiar vista
+    setError("");
   }, [loginScreenState]);
 
   const handleAuth = async () => {
@@ -67,7 +69,6 @@ export const LoginScreen = ({
       const userRef = doc(db, "usuarios", uid);
       const docSnap = await getDoc(userRef);
 
-      // Si no existe el documento, lo creamos al registrarse
       if (!docSnap.exists() && loginScreenState === "SIGNUP") {
         const name =
           nameInputRef.current?.value.trim() ||
@@ -87,7 +88,6 @@ export const LoginScreen = ({
         setName(name);
         setUsername(name.replace(/ +/g, "-"));
       } else {
-        // Si ya existe, lo leemos
         const data = docSnap.data();
         setName(data?.nombre_usuario ?? "User");
         setUsername(data?.nombre_usuario?.replace(/ +/g, "-") ?? "user");
@@ -97,6 +97,45 @@ export const LoginScreen = ({
       void router.push("/profile");
     } catch (err: any) {
       setError("❌ " + (err.message || "Unexpected error"));
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const uid = user.uid;
+      const userRef = doc(db, "usuarios", uid);
+      const docSnap = await getDoc(userRef);
+
+      if (!docSnap.exists()) {
+        const name = user.displayName || "Usuari" + Math.random().toString().slice(2);
+        await setDoc(userRef, {
+          nombre_usuario: name,
+          email: user.email,
+          fecha_creacion: new Date(),
+          language: {
+            name: "Spanish",
+            nativeName: "Español",
+            viewBox: "0 66 82 66",
+            code: "es",
+          },
+          streak: 0,
+        });
+        setName(name);
+        setUsername(name.replace(/ +/g, "-"));
+      } else {
+        const data = docSnap.data();
+        setName(data?.nombre_usuario ?? "User");
+        setUsername(data?.nombre_usuario?.replace(/ +/g, "-") ?? "user");
+      }
+
+      setLoggedIn(true);
+      void router.push("/profile");
+    } catch (err: any) {
+      console.error("❌ Error amb Google Sign-In:", err);
+      setError("❌ " + (err.message || "Error amb Google"));
     }
   };
 
@@ -201,7 +240,7 @@ export const LoginScreen = ({
           </div>
           <button
             className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-gray-300 bg-white py-3 font-bold text-gray-700 transition hover:bg-gray-100 hover:brightness-90"
-            onClick={handleAuth}
+            onClick={handleGoogleLogin}
           >
             <GoogleLogoSvg className="h-5 w-5" /> Google
           </button>

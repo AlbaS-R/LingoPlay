@@ -60,7 +60,7 @@ export const units: readonly Unit[] = [
     { type: "star", description: "Voice Exercise 2" },  
     { type: "book", description: "Voice Exercise 3" },  
     { type: "star", description: "Voice Exercise 4" },  
-    { type: "trophy", description: "Unit 3 review" },
+    { type: "trophy", description: "Voice Exercise 5" },
   ],
 
   },
