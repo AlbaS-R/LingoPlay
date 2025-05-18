@@ -16,7 +16,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import localforage from "localforage";
 import { MemoryGame } from "~/components/MemoryGame";
 
-// Define ExerciseType and interfaces for downloaded exercises
+
 type ExerciseType = "ejerciciosES" | "ejerciciosVoz" | "memoryGames";
 
 interface BaseExercise {
@@ -201,10 +201,10 @@ const LessonOfline: NextPage = () => {
             startTime.current = Date.now();
             endTime.current = startTime.current;
           } else if (exerciseData.type === "memoryGames") {
-             // For memory games, we still set a dummy problem to indicate that we're loading a special exercise
+             
              setLessonProblems([{ type: exerciseData.type, id: exerciseData.id, title: exerciseData.title }]);
           }
-          // No need to handle "ejerciciosVoz" here as it's redirected earlier
+          
         } else {
           console.error("No exercise data found or fetched.");
           router.push("/downloads");
@@ -250,25 +250,24 @@ const LessonOfline: NextPage = () => {
     endTime.current = Date.now();
   };
 
-  // Only show loading if we haven't redirected yet or are genuinely loading a standard lesson
+  
   if (isLoading || !router.isReady || !exerciseType || (exerciseType !== "memoryGames" && !currentProblem)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
         <Stack spacing={3} direction="row" alignItems="center">
           <CircularProgress size="4rem" />
         </Stack>
-        <h1 className="text-2xl font-bold">Cargando Lección...</h1>
+        <h1 className="text-2xl font-bold">Loading Lesson...</h1>
       </div>
     );
   }
 
-  // Conditional rendering for Memory Game (still a component within lesson.tsx)
+  
   if (exerciseType === "memoryGames" && exerciseId) {
     return <MemoryGame gameId={exerciseId} />;
   }
 
-  // The rest of the rendering is for standard "ejerciciosES"
-  // Standard lesson completion check
+  
   if (lessonProblemIndex >= totalCorrectAnswersNeeded && !correctAnswerShown) {
     const formatTime = (timeMs: number): string => {
       const seconds = Math.floor(timeMs / 1000) % 60;
@@ -280,20 +279,20 @@ const LessonOfline: NextPage = () => {
 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
-        <h1 className="text-3xl font-bold text-yellow-500">¡Lección Completada!</h1>
+        <h1 className="text-3xl font-bold text-yellow-500">Lesson complete!!</h1>
         <div className="flex gap-4">
           <div className="rounded-xl bg-yellow-400 px-4 py-2 text-center text-white">
-            <div>XP Total</div>
+            <div>Total XP</div>
             <div className="text-xl">{correctAnswerCount}</div>
           </div>
           <div className="rounded-xl bg-blue-400 px-4 py-2 text-center text-white">
-            <div>Tiempo</div>
+            <div>Time</div>
             <div className="text-xl">
               {formatTime(endTime.current - startTime.current)}
             </div>
           </div>
           <div className="rounded-xl bg-green-400 px-4 py-2 text-center text-white">
-            <div>Precisión</div>
+            <div>Precition</div>
             <div className="text-xl">
               {Math.round(
                 (correctAnswerCount /
@@ -308,13 +307,13 @@ const LessonOfline: NextPage = () => {
           href="/learn"
           className="rounded-2xl border-b-4 border-green-600 bg-green-500 px-4 py-2 text-white hover:brightness-105"
         >
-          Continuar
+          Continue
         </a>
       </div>
     );
   }
 
-  // Default rendering for standard "SELECT_1_OF_3" problems
+
   return (
     <div className="flex min-h-screen flex-col gap-5 px-4 py-5">
       <header className="flex items-center gap-4">
@@ -360,7 +359,7 @@ const LessonOfline: NextPage = () => {
           className="rounded-2xl border-2 border-b-4 border-gray-200 p-3 text-gray-400 hover:border-gray-300 hover:bg-gray-100"
           onClick={() => setCorrectAnswerShown(true)}
         >
-          Saltar
+          Skip
         </button>
 
         {selectedAnswer === null ? (
@@ -368,14 +367,14 @@ const LessonOfline: NextPage = () => {
             disabled
             className="rounded-2xl bg-gray-200 p-3 text-gray-400"
           >
-            Comprobar
+            Check
           </button>
         ) : (
           <button
             onClick={onCheckAnswer}
             className="rounded-2xl border-b-4 border-green-600 bg-green-500 p-3 font-bold text-white"
           >
-            Comprobar
+            Check
           </button>
         )}
 
@@ -384,13 +383,13 @@ const LessonOfline: NextPage = () => {
             className={`rounded-xl p-4 text-center font-bold ${isAnswerCorrect ? "bg-green-100 text-green-800" : "bg-rose-100 text-rose-600"}`}
           >
             {isAnswerCorrect
-              ? "¡Buen trabajo!"
-              : `Respuesta correcta: ${currentProblem.answers[currentProblem.correctAnswer].name}`}
+              ? "Good Job!!"
+              : `The correct answer is: ${currentProblem.answers[currentProblem.correctAnswer].name}`}
             <button
               onClick={onFinish}
               className={`mt-3 w-full rounded-2xl border-b-4 p-3 text-white ${isAnswerCorrect ? "border-green-600 bg-green-500" : "border-rose-600 bg-rose-500"}`}
             >
-              Continuar
+              Continue
             </button>
           </div>
         )}
@@ -399,23 +398,23 @@ const LessonOfline: NextPage = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="rounded-2xl bg-white p-6 text-center">
               <h2 className="mb-2 text-xl font-bold">
-                ¿Estás seguro de que quieres salir?
+                Are you sure you want to quit?
               </h2>
               <p className="mb-4 text-gray-500">
-                Todo el progreso de esta lección se perderá.
+                All the progress made will get lost.
               </p>
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setQuitMessageShown(false)}
                   className="rounded-2xl border px-4 py-2 text-gray-400 hover:bg-gray-100"
                 >
-                  Permanecer
+                  Stay
                 </button>
                 <a
                   href="/learn"
                   className="rounded-2xl border-b-4 border-blue-500 bg-blue-400 px-4 py-2 text-white"
                 >
-                  Salir
+                  Quit
                 </a>
               </div>
             </div>
