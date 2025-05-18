@@ -113,7 +113,6 @@ const TileIcon = ({
         <LockedTrophySvg />
       );
     default:
-      // fallback to a simple empty span if tileType is not recognized
       return <span />;
   }
 };
